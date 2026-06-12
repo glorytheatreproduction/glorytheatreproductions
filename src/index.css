@@ -1,0 +1,289 @@
+@import "tailwindcss";
+
+@theme {
+  /* ── Backgrounds ─────────────────────────────────────── */
+  --color-void: #0a0804;
+  --color-stage: #1a1410;
+  --color-paper: #f8f5f0;
+  --color-parchment: #f0ece6;
+  --color-surface: #e8e2d9;
+
+  /* ── Text ────────────────────────────────────────────── */
+  --color-ink: #1a1410;
+  --color-ink-muted: #4a3f35;
+  --color-cream: #f5f0e8;
+  --color-cream-muted: #d4c9b8;
+
+  /* ── Accent ──────────────────────────────────────────── */
+  --color-gold: #c9a84c;
+  --color-gold-muted: #8a6d2f;
+  --color-gold-light: #e8d5a3;
+  --color-burgundy: #6b1f2a;
+  --color-burgundy-light: #9b3040;
+
+  /* ── Borders & Dividers ──────────────────────────────── */
+  --color-border-light: rgba(26, 20, 16, 0.1);
+  --color-border-dark: rgba(201, 168, 76, 0.2);
+
+  /* ── Fonts — unchanged ───────────────────────────────── */
+  --font-display: "Playfair Display", Georgia, serif;
+  --font-heading: "Cormorant Garamond", Georgia, serif;
+  --font-body: "DM Sans", sans-serif;
+  --font-mono: "DM Mono", monospace;
+}
+
+:root {
+  --color-void: #0a0804;
+  --color-stage: #1a1410;
+  --color-paper: #f8f5f0;
+  --color-parchment: #f0ece6;
+  --color-surface: #e8e2d9;
+  --color-ink: #1a1410;
+  --color-ink-muted: #4a3f35;
+  --color-cream: #f5f0e8;
+  --color-cream-muted: #d4c9b8;
+  --color-gold: #c9a84c;
+  --color-gold-muted: #8a6d2f;
+  --color-gold-light: #e8d5a3;
+  --color-burgundy: #6b1f2a;
+  --color-burgundy-light: #9b3040;
+  --color-border-light: rgba(26, 20, 16, 0.1);
+  --color-border-dark: rgba(201, 168, 76, 0.2);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-body);
+  background-color: var(--color-paper);
+  color: var(--color-ink);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+}
+
+a {
+  text-decoration: none;
+}
+
+/* Navbar — scroll-aware link colours (avoids inherit cascade issues) */
+.site-nav[data-filled="false"] .site-nav-link:not([aria-current="page"]) {
+  color: var(--color-cream);
+}
+
+.site-nav[data-filled="true"] .site-nav-link:not([aria-current="page"]) {
+  color: var(--color-ink);
+}
+
+.site-nav .site-nav-link[aria-current="page"] {
+  color: var(--color-gold);
+}
+
+.site-nav .site-nav-link:not([aria-current="page"]):hover {
+  color: var(--color-gold);
+}
+
+.site-nav[data-filled="false"] .site-nav-subtitle {
+  color: color-mix(in srgb, var(--color-cream) 85%, transparent);
+}
+
+.site-nav[data-filled="true"] .site-nav-subtitle {
+  color: var(--color-ink-muted);
+}
+
+.site-nav[data-filled="false"] .site-nav-menu-btn {
+  color: var(--color-cream);
+}
+
+.site-nav[data-filled="true"] .site-nav-menu-btn {
+  color: var(--color-ink);
+}
+
+.site-nav-ambient[data-filled="false"] {
+  color: var(--color-gold-light);
+}
+
+.site-nav-ambient[data-filled="true"] {
+  color: var(--color-ink-muted);
+}
+
+/* Grain overlay — dark sections only */
+.section-dark::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  opacity: 0.03;
+  pointer-events: none;
+  z-index: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 128px 128px;
+}
+
+/* Marquee animation */
+@keyframes marquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+@keyframes marquee-reverse {
+  0% { transform: translateX(-50%); }
+  100% { transform: translateX(0); }
+}
+
+.marquee-track {
+  animation: marquee 40s linear infinite;
+}
+
+.marquee-track:hover {
+  animation-play-state: paused;
+}
+
+.marquee-track-reverse {
+  animation: marquee-reverse 55s linear infinite;
+}
+
+.marquee-track-reverse:hover {
+  animation-play-state: paused;
+}
+
+/* Hero entrance animations */
+@keyframes heroLineUp {
+  from {
+    opacity: 0;
+    transform: translateY(40px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.hero-line {
+  opacity: 0;
+  animation: heroLineUp 0.8s ease forwards;
+}
+
+.hero-line:nth-child(1) { animation-delay: 0ms; }
+.hero-line:nth-child(2) { animation-delay: 40ms; }
+.hero-line:nth-child(3) { animation-delay: 80ms; }
+
+.hero-cta {
+  opacity: 0;
+  animation: heroLineUp 0.8s ease 200ms forwards;
+}
+
+/* Scroll reveal */
+[data-reveal] {
+  opacity: 0;
+  transform: translateY(28px);
+  transition: opacity 0.7s ease, transform 0.7s ease;
+}
+
+[data-reveal].is-revealed {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+[data-reveal-delay="1"] { transition-delay: 0.1s; }
+[data-reveal-delay="2"] { transition-delay: 0.2s; }
+[data-reveal-delay="3"] { transition-delay: 0.3s; }
+
+/* Gold underline link */
+.gold-link {
+  position: relative;
+  color: var(--color-gold);
+  font-family: var(--font-body);
+  font-weight: 500;
+}
+
+.gold-link::after {
+  content: "";
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 0;
+  height: 1px;
+  background: var(--color-gold);
+  transition: width 0.3s ease;
+}
+
+.gold-link:hover::after {
+  width: 100%;
+}
+
+/* Masonry columns */
+.masonry-grid {
+  column-count: 1;
+  column-gap: 1.5rem;
+}
+
+@media (min-width: 640px) {
+  .masonry-grid { column-count: 2; }
+}
+
+@media (min-width: 1024px) {
+  .masonry-grid { column-count: 3; }
+}
+
+.masonry-item {
+  break-inside: avoid;
+  margin-bottom: 1.5rem;
+}
+
+/* Testimonials scroll on mobile */
+.testimonials-scroll {
+  display: flex;
+  gap: 2rem;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.testimonials-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.testimonials-scroll > * {
+  scroll-snap-align: start;
+  flex: 0 0 85%;
+}
+
+@media (min-width: 768px) {
+  .testimonials-scroll {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    overflow-x: visible;
+  }
+
+  .testimonials-scroll > * {
+    flex: unset;
+  }
+}
+
+/* Event filter transition */
+.event-item-enter {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 0.4s ease, transform 0.4s ease;
+}
+
+.event-item-exit {
+  opacity: 0;
+  transform: translateY(12px);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}

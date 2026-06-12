@@ -1,19 +1,22 @@
 {
   "name": "theatre-proj",
-  "version": "1.0.0",
-  "description": "Theatre project with Tailwind CSS and RSVP system",
-  "main": "index.js",
+  "version": "2.0.0",
+  "description": "Glory Theatre Productions — React redesign",
+  "type": "module",
   "scripts": {
-    "build-css": "tailwindcss -i ./src/css/input.css -o ./src/css/output.css --watch",
-    "build-css-prod": "tailwindcss -i ./src/css/input.css -o ./src/css/output.css --minify"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "devDependencies": {
-    "tailwindcss": "^3.4.1"
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
   },
   "dependencies": {
-    "googleapis": "^170.1.0"
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "react-router-dom": "^7.6.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.1.8",
+    "@vitejs/plugin-react": "^4.4.1",
+    "tailwindcss": "^4.1.8",
+    "vite": "^6.3.5"
   }
 }
