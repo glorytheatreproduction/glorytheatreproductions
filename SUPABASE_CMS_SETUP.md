@@ -7,28 +7,45 @@ This project includes a Supabase-backed CMS for editing site content, events, ga
 1. Go to [supabase.com](https://supabase.com) and create a new project.
 2. Copy the **Project URL** and **anon public key** from Settings → API.
 
-## 2. Run database migrations
+## 2. Link Supabase CLI & run migrations
 
-**Option A — SQL Editor (fastest if you only have the service role key)**
+**Project ref:** `xjywhejhnplrdxyulnvk` (already in `supabase/config.toml` and `supabase/.temp/project-ref`)
 
-1. Open [Supabase Dashboard](https://supabase.com/dashboard/project/xjywhejhnplrdxyulnvk/sql/new) → **SQL Editor**
-2. Paste the contents of `supabase/RUN_IN_SQL_EDITOR.sql`
-3. Click **Run**
-
-**Option B — CLI / script (needs database password)**
-
-Add `SUPABASE_DB_PASSWORD` to `.env.local` (from Settings → Database), then:
+### Option A — CLI (recommended)
 
 ```bash
-npm run cms:migrate
+# 1. Log in (opens browser)
+supabase login
+
+# 2. Add database password to .env.local
+#    Supabase → Settings → Database → Database password
+SUPABASE_DB_PASSWORD=your-db-password
+
+# 3. Link project + push migrations
+npm run supabase:link
+
+# 4. Seed content + create admin
+npm run cms:seed
+npm run cms:create-admin
 ```
 
-Or with Supabase CLI:
+Or step by step:
 
 ```bash
-supabase link --project-ref xjywhejhnplrdxyulnvk
+supabase link --project-ref xjywhejhnplrdxyulnvk --password YOUR_DB_PASSWORD
 supabase db push
 ```
+
+### Option B — SQL Editor (no CLI login)
+
+1. Open [Supabase SQL Editor](https://supabase.com/dashboard/project/xjywhejhnplrdxyulnvk/sql/new)
+2. Paste the contents of `supabase/RUN_IN_SQL_EDITOR.sql`
+3. Click **Run**
+4. Then run `npm run cms:seed` and `npm run cms:create-admin`
+
+### Option C — GitHub integration (auto migrations on push)
+
+In Supabase Dashboard → **Project Settings → Integrations → GitHub**, connect `glorytheatreproduction/glorytheatreproductions`. Migrations in `supabase/migrations/` will deploy on push.
 
 ## 3. Configure environment variables
 
