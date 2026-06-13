@@ -1,3 +1,19 @@
+import { MEDIA_POSITIONS, parseVideoUrl } from '../../lib/videoEmbed'
+
+function MediaFigure({ position, caption, children }) {
+  const positionClass = MEDIA_POSITIONS[position] || MEDIA_POSITIONS.center
+  return (
+    <figure className={`my-8 ${positionClass}`}>
+      {children}
+      {caption ? (
+        <figcaption className="mt-2 text-center text-sm text-ink-muted italic">
+          {caption}
+        </figcaption>
+      ) : null}
+    </figure>
+  )
+}
+
 export default function BlogArticle({ content }) {
   if (!content?.length) return null
 
@@ -30,6 +46,58 @@ export default function BlogArticle({ content }) {
               </p>
             </blockquote>
           )
+        }
+
+        if (block.type === 'image' && block.src) {
+          return (
+            <MediaFigure key={i} position={block.position} caption={block.caption}>
+              <img
+                src={block.src}
+                alt={block.caption || ''}
+                className="w-full rounded border border-border-light object-cover"
+              />
+            </MediaFigure>
+          )
+        }
+
+        if (block.type === 'video' && (block.url || block.src)) {
+          const videoUrl = block.url || block.src
+          const parsed = parseVideoUrl(videoUrl)
+
+          if (!parsed) return null
+
+          if (parsed.kind === 'embed') {
+            return (
+              <MediaFigure key={i} position={block.position} caption={block.caption}>
+                <div className="aspect-video overflow-hidden rounded border border-border-light bg-void">
+                  <iframe
+                    src={parsed.embedUrl}
+                    title={block.caption || 'Embedded video'}
+                    className="h-full w-full"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                  />
+                </div>
+              </MediaFigure>
+            )
+          }
+
+          return (
+            <MediaFigure key={i} position={block.position} caption={block.caption}>
+              <video
+                src={parsed.src}
+                controls
+                playsInline
+                className="w-full rounded border border-border-light bg-void"
+              >
+                Your browser does not support embedded video.
+              </video>
+            </MediaFigure>
+          )
+        }
+
+        if (block.type === 'image' || block.type === 'video') {
+          return null
         }
 
         return (

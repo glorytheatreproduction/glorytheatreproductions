@@ -4,6 +4,8 @@ import { getSupabase, supabase, supabaseIsConfigured } from '../lib/supabaseClie
 const AuthContext = createContext(null)
 
 const STAFF_ROLES = new Set(['editor', 'admin', 'super_admin'])
+const ADMIN_ROLES = new Set(['admin', 'super_admin'])
+const BLOG_WRITER_ROLES = new Set(['blog_writer'])
 
 export function AuthProvider({ children }) {
   const [session, setSession] = useState(null)
@@ -53,7 +55,11 @@ export function AuthProvider({ children }) {
     if (error) throw error
   }, [])
 
-  const isStaff = Boolean(profile?.status === 'active' && STAFF_ROLES.has(profile?.role))
+  const isActive = profile?.status === 'active'
+  const isStaff = Boolean(isActive && STAFF_ROLES.has(profile?.role))
+  const isAdmin = Boolean(isActive && ADMIN_ROLES.has(profile?.role))
+  const isBlogWriter = Boolean(isActive && BLOG_WRITER_ROLES.has(profile?.role))
+  const canAccessCms = isStaff || isBlogWriter
 
   const value = useMemo(
     () => ({
@@ -61,11 +67,14 @@ export function AuthProvider({ children }) {
       profile,
       loading,
       isStaff,
+      isAdmin,
+      isBlogWriter,
+      canAccessCms,
       supabaseConfigured: supabaseIsConfigured,
       signIn,
       signOut,
     }),
-    [session, profile, loading, isStaff, signIn, signOut]
+    [session, profile, loading, isStaff, isAdmin, isBlogWriter, canAccessCms, signIn, signOut]
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

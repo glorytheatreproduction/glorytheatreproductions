@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import Layout from './components/layout/Layout'
 import AdminLayout, { AdminGuard } from './components/admin/AdminLayout'
+import { AdminRoute, StaffRoute } from './components/admin/AdminRoutes'
 import Home from './pages/Home'
 import Events from './pages/Events'
 import EventDetail from './pages/EventDetail'
@@ -16,6 +17,7 @@ import AdminEvents from './pages/admin/AdminEvents'
 import AdminGallery from './pages/admin/AdminGallery'
 import AdminBlog from './pages/admin/AdminBlog'
 import AdminMedia from './pages/admin/AdminMedia'
+import AdminMembers from './pages/admin/AdminMembers'
 
 export default function App() {
   return (
@@ -41,12 +43,13 @@ export default function App() {
             </AdminGuard>
           }
         >
-          <Route index element={<AdminDashboard />} />
-          <Route path="home" element={<AdminHome />} />
-          <Route path="events" element={<AdminEvents />} />
-          <Route path="gallery" element={<AdminGallery />} />
+          <Route index element={<StaffRoute><AdminDashboard /></StaffRoute>} />
+          <Route path="home" element={<StaffRoute><AdminHome /></StaffRoute>} />
+          <Route path="events" element={<StaffRoute><AdminEvents /></StaffRoute>} />
+          <Route path="gallery" element={<StaffRoute><AdminGallery /></StaffRoute>} />
           <Route path="blog" element={<AdminBlog />} />
           <Route path="media" element={<AdminMedia />} />
+          <Route path="members" element={<AdminRoute><AdminMembers /></AdminRoute>} />
         </Route>
       </Routes>
     </BrowserRouter>

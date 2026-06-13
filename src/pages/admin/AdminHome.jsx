@@ -37,7 +37,7 @@ export default function AdminHome() {
   const [join, setJoin] = useState(homeJoinDefaults)
   const [season, setSeason] = useState(seasonDefaults)
   const [pageHeroes, setPageHeroes] = useState(pageHeroDefaults)
-  const [testimonialsJson, setTestimonialsJson] = useState(JSON.stringify(testimonialsDefaults.items, null, 2))
+  const [testimonials, setTestimonials] = useState(testimonialsDefaults.items)
   const [status, setStatus] = useState('')
   const [saving, setSaving] = useState(false)
 
@@ -61,7 +61,7 @@ export default function AdminHome() {
         gallery: mergeContent(pageHeroDefaults.gallery, pg),
         blog: mergeContent(pageHeroDefaults.blog, pb),
       })
-      if (t?.items) setTestimonialsJson(JSON.stringify(t.items, null, 2))
+      if (t?.items) setTestimonials(t.items)
     }).catch((err) => setStatus(err.message))
   }, [])
 
@@ -69,12 +69,13 @@ export default function AdminHome() {
     setSaving(true)
     setStatus('')
     try {
-      let testimonials = testimonialsDefaults.items
-      try {
-        testimonials = JSON.parse(testimonialsJson)
-      } catch {
-        throw new Error('Testimonials JSON is invalid')
-      }
+      const cleanedTestimonials = testimonials
+        .map((item) => ({
+          quote: item.quote?.trim() || '',
+          name: item.name?.trim() || '',
+          role: item.role?.trim() || '',
+        }))
+        .filter((item) => item.quote && item.name)
       await Promise.all([
         upsertSiteContent(CONTENT_KEYS.homeHero, hero),
         upsertSiteContent(CONTENT_KEYS.homeMission, mission),
@@ -83,7 +84,7 @@ export default function AdminHome() {
         upsertSiteContent(CONTENT_KEYS.pageEventsHero, pageHeroes.events),
         upsertSiteContent(CONTENT_KEYS.pageGalleryHero, pageHeroes.gallery),
         upsertSiteContent(CONTENT_KEYS.pageBlogHero, pageHeroes.blog),
-        upsertSiteContent(CONTENT_KEYS.homeTestimonials, { items: testimonials }),
+        upsertSiteContent(CONTENT_KEYS.homeTestimonials, { items: cleanedTestimonials }),
       ])
       setStatus('Saved successfully.')
     } catch (err) {
@@ -146,8 +147,47 @@ export default function AdminHome() {
       </section>
 
       <section className={`${ADMIN_PANEL} space-y-4`}>
-        <h2 className="font-display text-xl">Testimonials (JSON)</h2>
-        <textarea className={ADMIN_INPUT} rows={10} value={testimonialsJson} onChange={(e) => setTestimonialsJson(e.target.value)} />
+        <div className="flex items-center justify-between gap-3">
+          <h2 className="font-display text-xl">Testimonials</h2>
+          <button
+            type="button"
+            className={ADMIN_BTN}
+            onClick={() => setTestimonials((prev) => [...prev, { quote: '', name: '', role: '' }])}
+          >
+            Add testimonial
+          </button>
+        </div>
+        {testimonials.map((item, index) => (
+          <div key={index} className="space-y-3 rounded border border-border-light p-4">
+            <div className="flex items-center justify-between gap-3">
+              <p className="text-sm font-medium text-ink">Testimonial {index + 1}</p>
+              {testimonials.length > 1 ? (
+                <button
+                  type="button"
+                  className="text-sm text-burgundy"
+                  onClick={() => setTestimonials((prev) => prev.filter((_, i) => i !== index))}
+                >
+                  Remove
+                </button>
+              ) : null}
+            </div>
+            <TextArea label="Quote" value={item.quote} onChange={(v) => {
+              const next = [...testimonials]
+              next[index] = { ...next[index], quote: v }
+              setTestimonials(next)
+            }} />
+            <TextField label="Name" value={item.name} onChange={(v) => {
+              const next = [...testimonials]
+              next[index] = { ...next[index], name: v }
+              setTestimonials(next)
+            }} />
+            <TextField label="Role" value={item.role} onChange={(v) => {
+              const next = [...testimonials]
+              next[index] = { ...next[index], role: v }
+              setTestimonials(next)
+            }} />
+          </div>
+        ))}
       </section>
     </div>
   )

@@ -118,7 +118,6 @@ export default function AdminEvents() {
         </div>
 
         <div className={`${ADMIN_PANEL} space-y-4`}>
-          <Text label="ID" value={form.id} onChange={(v) => setField('id', v)} hint="Leave blank to auto-generate from title" />
           <Text label="Title" value={form.title} onChange={(v) => setField('title', v)} />
           <TextArea label="Short description" value={form.description} onChange={(v) => setField('description', v)} />
           <TextArea label="Long description" value={form.longDescription} onChange={(v) => setField('longDescription', v)} rows={5} />
@@ -165,12 +164,11 @@ export default function AdminEvents() {
   )
 }
 
-function Text({ label, value, onChange, type = 'text', hint }) {
+function Text({ label, value, onChange, type = 'text' }) {
   return (
     <div>
       <label className={ADMIN_LABEL}>{label}</label>
       <input className={ADMIN_INPUT} type={type} value={value ?? ''} onChange={(e) => onChange(e.target.value)} />
-      {hint ? <p className="mt-1 text-xs text-ink-muted">{hint}</p> : null}
     </div>
   )
 }

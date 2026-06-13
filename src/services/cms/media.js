@@ -39,6 +39,23 @@ export async function uploadMediaAsset(file, { folder = 'general', alt = '', tit
   return mapMediaRow(data)
 }
 
+export async function uploadMediaAssets(files, options = {}) {
+  const kind = options.kind || 'image'
+  const list = Array.from(files || []).filter((file) => {
+    if (kind === 'video') return file.type.startsWith('video/')
+    if (kind === 'image') return file.type.startsWith('image/')
+    return file.type.startsWith('image/') || file.type.startsWith('video/')
+  })
+  if (!list.length) return []
+
+  const results = []
+  for (const file of list) {
+    const title = file.name.replace(/\.[^.]+$/, '').replace(/[-_]+/g, ' ').trim()
+    results.push(await uploadMediaAsset(file, { ...options, title: title || file.name }))
+  }
+  return results
+}
+
 export async function deleteMediaAsset(id) {
   const { data, error: fetchError } = await getSupabase().from('media_assets').select('bucket, path').eq('id', id).single()
   if (fetchError) throw fetchError

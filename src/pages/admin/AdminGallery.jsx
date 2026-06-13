@@ -11,6 +11,7 @@ import {
 } from '../../components/admin/adminStyles'
 import { GALLERY_CATEGORIES } from '../../data/gallery'
 import { deleteAlbum, fetchAllAlbums, upsertAlbum } from '../../services/cms/gallery'
+import { uploadMediaAssets } from '../../services/cms/media'
 
 const emptyAlbum = () => ({
   id: '',
@@ -24,13 +25,18 @@ const emptyAlbum = () => ({
   sortOrder: 0,
 })
 
+function emptyPhoto(index = 0) {
+  return { id: `photo-${index + 1}`, src: '', title: '' }
+}
+
 export default function AdminGallery() {
   const [items, setItems] = useState([])
   const [selected, setSelected] = useState(null)
   const [form, setForm] = useState(emptyAlbum())
-  const [imagesJson, setImagesJson] = useState('[]')
+  const [photos, setPhotos] = useState([])
   const [status, setStatus] = useState('')
   const [loading, setLoading] = useState(true)
+  const [uploading, setUploading] = useState(false)
 
   const load = async () => {
     setLoading(true)
@@ -48,8 +54,57 @@ export default function AdminGallery() {
   const select = (album) => {
     setSelected(album?.id || null)
     setForm(album ? { ...album } : emptyAlbum())
-    setImagesJson(JSON.stringify(album?.images || [], null, 2))
+    setPhotos(album?.images?.length ? album.images.map((img) => ({ ...img })) : [emptyPhoto()])
     setStatus('')
+  }
+
+  const updatePhoto = (index, key, value) => {
+    setPhotos((prev) => prev.map((photo, i) => (i === index ? { ...photo, [key]: value } : photo)))
+  }
+
+  const addPhoto = () => setPhotos((prev) => [...prev, emptyPhoto(prev.length)])
+
+  const removePhoto = (index) => {
+    setPhotos((prev) => (prev.length <= 1 ? prev : prev.filter((_, i) => i !== index)))
+  }
+
+  const onUploadPhotos = async (e) => {
+    const files = e.target.files
+    if (!files?.length) return
+
+    setUploading(true)
+    setStatus('')
+    try {
+      const uploaded = await uploadMediaAssets(files, { folder: 'gallery' })
+      if (!uploaded.length) {
+        setStatus('Choose one or more image files.')
+        return
+      }
+
+      const newPhotos = uploaded.map((asset, index) => ({
+        id: `photo-${Date.now()}-${index}`,
+        src: asset.publicUrl,
+        title: asset.title?.replace(/\.[^.]+$/, '') || '',
+      }))
+
+      setPhotos((prev) => {
+        const filled = prev.filter((photo) => photo.src?.trim())
+        const onlyEmptyPlaceholder = prev.length === 1 && !prev[0].src?.trim()
+        return onlyEmptyPlaceholder ? newPhotos : [...filled, ...newPhotos]
+      })
+
+      setForm((prev) => ({
+        ...prev,
+        cover: prev.cover || newPhotos[0]?.src || '',
+      }))
+
+      setStatus(`${newPhotos.length} photo${newPhotos.length === 1 ? '' : 's'} uploaded. Add captions, then save the album.`)
+    } catch (err) {
+      setStatus(err.message || 'Upload failed.')
+    } finally {
+      setUploading(false)
+      e.target.value = ''
+    }
   }
 
   const save = async () => {
@@ -58,11 +113,15 @@ export default function AdminGallery() {
       setStatus('Title is required.')
       return
     }
-    let images = []
-    try {
-      images = JSON.parse(imagesJson)
-    } catch {
-      setStatus('Images JSON is invalid.')
+    const images = photos
+      .filter((photo) => photo.src?.trim())
+      .map((photo, index) => ({
+        id: photo.id || `photo-${index + 1}`,
+        src: photo.src.trim(),
+        title: photo.title?.trim() || '',
+      }))
+    if (!images.length) {
+      setStatus('Add at least one photo.')
       return
     }
     try {
@@ -111,7 +170,6 @@ export default function AdminGallery() {
         </div>
 
         <div className={`${ADMIN_PANEL} space-y-4`}>
-          <Field label="ID" value={form.id} onChange={(v) => setForm({ ...form, id: v })} />
           <Field label="Title" value={form.title} onChange={(v) => setForm({ ...form, title: v })} />
           <TextArea label="Description" value={form.description} onChange={(v) => setForm({ ...form, description: v })} />
           <Field label="Date label" value={form.date} onChange={(v) => setForm({ ...form, date: v })} />
@@ -125,11 +183,49 @@ export default function AdminGallery() {
           </div>
           <Field label="Sort order" value={form.sortOrder} onChange={(v) => setForm({ ...form, sortOrder: Number(v) || 0 })} type="number" />
           <ImageField label="Cover image" value={form.cover} onChange={(v) => setForm({ ...form, cover: v })} folder="gallery" />
-          <div>
-            <label className={ADMIN_LABEL}>Photos (JSON array)</label>
-            <p className="mb-2 text-xs text-ink-muted">Format: [{`{ "id": "photo-1", "src": "https://...", "title": "Caption" }`}]</p>
-            <textarea className={ADMIN_INPUT} rows={12} value={imagesJson} onChange={(e) => setImagesJson(e.target.value)} />
+
+          <div className="space-y-4 rounded border border-border-light p-4">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <h3 className="font-medium text-ink">Photos</h3>
+              <div className="flex flex-wrap gap-2">
+                <label className={`${ADMIN_BTN} cursor-pointer`}>
+                  {uploading ? 'Uploading…' : 'Upload photos'}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    className="hidden"
+                    onChange={onUploadPhotos}
+                    disabled={uploading}
+                  />
+                </label>
+                <button type="button" className={ADMIN_BTN_OUTLINE} onClick={addPhoto}>Add photo manually</button>
+              </div>
+            </div>
+            <p className="text-xs text-ink-muted">Select multiple images at once, or add photos one at a time with a URL.</p>
+            {photos.map((photo, index) => (
+              <div key={`${photo.id}-${index}`} className="space-y-3 rounded border border-border-light p-4">
+                <div className="flex items-center justify-between gap-3">
+                  <p className="text-sm font-medium text-ink">Photo {index + 1}</p>
+                  {photos.length > 1 ? (
+                    <button type="button" className="text-sm text-burgundy" onClick={() => removePhoto(index)}>Remove</button>
+                  ) : null}
+                </div>
+                <ImageField
+                  label="Image"
+                  value={photo.src}
+                  onChange={(v) => updatePhoto(index, 'src', v)}
+                  folder="gallery"
+                />
+                <Field
+                  label="Caption"
+                  value={photo.title}
+                  onChange={(v) => updatePhoto(index, 'title', v)}
+                />
+              </div>
+            ))}
           </div>
+
           <label className="flex items-center gap-2 text-sm">
             <input type="checkbox" checked={form.published !== false} onChange={(e) => setForm({ ...form, published: e.target.checked })} />
             Published

@@ -4,15 +4,15 @@ import { useAuth } from '../../context/AuthContext'
 import { ADMIN_BTN, ADMIN_INPUT, ADMIN_LABEL, ADMIN_PANEL } from '../../components/admin/adminStyles'
 
 export default function AdminLogin() {
-  const { signIn, session, isStaff, loading, supabaseConfigured } = useAuth()
+  const { signIn, session, canAccessCms, isBlogWriter, loading, supabaseConfigured } = useAuth()
   const location = useLocation()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [submitting, setSubmitting] = useState(false)
 
-  if (!loading && session && isStaff) {
-    return <Navigate to={(location.state?.from) || '/admin'} replace />
+  if (!loading && session && canAccessCms) {
+    return <Navigate to={(location.state?.from) || (isBlogWriter ? '/admin/blog' : '/admin')} replace />
   }
 
   const onSubmit = async (e) => {
@@ -20,9 +20,11 @@ export default function AdminLogin() {
     setSubmitting(true)
     setError('')
     try {
-      await signIn(email, password)
+      await signIn(email.trim().toLowerCase(), password)
     } catch (err) {
-      setError(err.message || 'Login failed')
+      setError(err.message === 'Invalid login credentials'
+        ? 'Email or password is incorrect. Use the admin email from setup and run npm run cms:create-admin if you need to reset the password.'
+        : err.message || 'Login failed')
     } finally {
       setSubmitting(false)
     }
@@ -36,7 +38,7 @@ export default function AdminLogin() {
         <p className="mt-2 text-sm text-ink-muted">Sign in to edit site content, events, gallery, and blog.</p>
 
         {!supabaseConfigured ? (
-          <p className="mt-6 text-sm text-burgundy">Supabase is not configured. Add env vars and restart the dev server.</p>
+          <p className="mt-6 text-sm text-burgundy">The CMS is not configured yet. Contact your developer to finish setup.</p>
         ) : (
           <form className="mt-8 space-y-4" onSubmit={onSubmit}>
             <div>

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { ADMIN_BTN_DANGER, ADMIN_BTN_OUTLINE, ADMIN_INPUT, ADMIN_LABEL, ADMIN_PANEL } from '../../components/admin/adminStyles'
+import { ADMIN_BTN_DANGER, ADMIN_BTN_OUTLINE, ADMIN_PANEL } from '../../components/admin/adminStyles'
 import { deleteMediaAsset, listMediaAssets, uploadMediaAsset } from '../../services/cms/media'
 
 const folders = ['general', 'cms', 'events', 'gallery', 'blog']
@@ -82,8 +82,17 @@ export default function AdminMedia() {
         {assets.map((asset) => (
           <div key={asset.id} className={`${ADMIN_PANEL} p-3`}>
             <img src={asset.publicUrl} alt={asset.alt || ''} className="aspect-video w-full rounded object-cover" />
-            <p className="mt-2 truncate text-xs text-ink-muted">{asset.title || asset.path}</p>
-            <input className={`${ADMIN_INPUT} mt-2 text-xs`} readOnly value={asset.publicUrl} onFocus={(e) => e.target.select()} />
+            <p className="mt-2 truncate text-xs text-ink-muted">{asset.title || 'Untitled image'}</p>
+            <button
+              type="button"
+              className={`${ADMIN_BTN_OUTLINE} mt-3 w-full`}
+              onClick={() => {
+                navigator.clipboard.writeText(asset.publicUrl)
+                setStatus('Image link copied.')
+              }}
+            >
+              Copy image link
+            </button>
             <button type="button" className={`${ADMIN_BTN_DANGER} mt-3`} onClick={() => remove(asset.id)}>Delete</button>
           </div>
         ))}
