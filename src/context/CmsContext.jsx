@@ -1,0 +1,117 @@
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
+import {
+  CONTENT_KEYS,
+  homeHeroDefaults,
+  homeJoinDefaults,
+  homeMissionDefaults,
+  mergeContent,
+  pageHeroDefaults,
+  seasonDefaults,
+  testimonialsDefaults,
+} from '../config/contentDefaults'
+import { events as defaultEvents, SEASON as defaultSeason, CATEGORIES } from '../data/events'
+import { galleryAlbums as defaultAlbums, GALLERY_CATEGORIES, getCategoryLabel } from '../data/gallery'
+import { blogPosts as defaultPosts, BLOG_CATEGORIES, testimonials as defaultTestimonials } from '../data/blog'
+import { supabaseIsConfigured } from '../lib/supabaseClient'
+import { fetchPublishedPosts } from '../services/cms/blog'
+import { fetchPublishedEvents } from '../services/cms/events'
+import { fetchPublishedAlbums } from '../services/cms/gallery'
+import { fetchAllSiteContent } from '../services/cms/siteContent'
+
+const CmsContext = createContext(null)
+
+export function CmsProvider({ children }) {
+  const [loading, setLoading] = useState(supabaseIsConfigured)
+  const [events, setEvents] = useState(defaultEvents)
+  const [season, setSeason] = useState(defaultSeason)
+  const [galleryAlbums, setGalleryAlbums] = useState(defaultAlbums)
+  const [blogPosts, setBlogPosts] = useState(defaultPosts)
+  const [testimonials, setTestimonials] = useState(defaultTestimonials)
+  const [homeHero, setHomeHero] = useState(homeHeroDefaults)
+  const [homeMission, setHomeMission] = useState(homeMissionDefaults)
+  const [homeJoin, setHomeJoin] = useState(homeJoinDefaults)
+  const [pageHeroes, setPageHeroes] = useState(pageHeroDefaults)
+
+  const load = useCallback(async () => {
+    if (!supabaseIsConfigured) {
+      setLoading(false)
+      return
+    }
+
+    try {
+      const [remoteEvents, remoteAlbums, remotePosts, siteContent] = await Promise.all([
+        fetchPublishedEvents(),
+        fetchPublishedAlbums(),
+        fetchPublishedPosts(),
+        fetchAllSiteContent(),
+      ])
+
+      if (remoteEvents?.length) setEvents(remoteEvents)
+      if (remoteAlbums?.length) setGalleryAlbums(remoteAlbums)
+      if (remotePosts?.length) setBlogPosts(remotePosts)
+
+      setHomeHero(mergeContent(homeHeroDefaults, siteContent[CONTENT_KEYS.homeHero]))
+      setHomeMission(mergeContent(homeMissionDefaults, siteContent[CONTENT_KEYS.homeMission]))
+      setHomeJoin(mergeContent(homeJoinDefaults, siteContent[CONTENT_KEYS.homeJoin]))
+      setSeason(mergeContent(seasonDefaults, siteContent[CONTENT_KEYS.settingsSeason]).season)
+      setTestimonials(
+        mergeContent(testimonialsDefaults, siteContent[CONTENT_KEYS.homeTestimonials]).items || defaultTestimonials
+      )
+      setPageHeroes({
+        events: mergeContent(pageHeroDefaults.events, siteContent[CONTENT_KEYS.pageEventsHero]),
+        gallery: mergeContent(pageHeroDefaults.gallery, siteContent[CONTENT_KEYS.pageGalleryHero]),
+        blog: mergeContent(pageHeroDefaults.blog, siteContent[CONTENT_KEYS.pageBlogHero]),
+      })
+    } catch (err) {
+      console.error('[CMS] failed to load remote content, using defaults', err)
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    load()
+  }, [load])
+
+  const value = useMemo(
+    () => ({
+      loading,
+      events,
+      season,
+      galleryAlbums,
+      blogPosts,
+      testimonials,
+      homeHero,
+      homeMission,
+      homeJoin,
+      pageHeroes,
+      categories: CATEGORIES,
+      galleryCategories: GALLERY_CATEGORIES,
+      blogCategories: BLOG_CATEGORIES,
+      getCategoryLabel,
+      refetch: load,
+      cmsEnabled: supabaseIsConfigured,
+    }),
+    [
+      loading,
+      events,
+      season,
+      galleryAlbums,
+      blogPosts,
+      testimonials,
+      homeHero,
+      homeMission,
+      homeJoin,
+      pageHeroes,
+      load,
+    ]
+  )
+
+  return <CmsContext.Provider value={value}>{children}</CmsContext.Provider>
+}
+
+export function useCms() {
+  const ctx = useContext(CmsContext)
+  if (!ctx) throw new Error('useCms must be used within CmsProvider')
+  return ctx
+}

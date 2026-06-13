@@ -1,4 +1,4 @@
-const RSVP_ENDPOINT = '/.netlify/functions/rsvp-handler'
+const RSVP_ENDPOINT = '/api/rsvp-handler'
 
 export async function submitRsvp({
   name,

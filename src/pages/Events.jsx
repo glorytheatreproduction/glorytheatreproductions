@@ -5,11 +5,13 @@ import CategoryFilter from '../components/events/CategoryFilter'
 import EventTab from '../components/events/EventTab'
 import EventInfoStrip from '../components/events/EventInfoStrip'
 import FeaturedEventBanner from '../components/events/FeaturedEventBanner'
-import { events, CATEGORIES, SEASON } from '../data/events'
+import { useCms } from '../context/CmsContext'
 import { useDocumentTitle } from '../hooks/useDocumentTitle'
 import { useScrollReveal } from '../hooks/useScrollReveal'
 
 export default function Events() {
+  const { events, season, categories, pageHeroes } = useCms()
+
   useDocumentTitle(
     'Events & Productions — Glory Theatre Productions',
     'Browse upcoming events and productions from Glory Theatre Productions. Free entry — reserve your digital ticket online.'
@@ -17,6 +19,7 @@ export default function Events() {
   useScrollReveal()
 
   const [filter, setFilter] = useState('all')
+  const hero = pageHeroes.events
 
   const featured = events.find((e) => e.featured)
   const filtered = filter === 'all'
@@ -29,21 +32,20 @@ export default function Events() {
   return (
     <>
       <PageHero
-        label="Events & Productions"
-        title="Upcoming Shows"
+        label={hero.label}
+        title={hero.title}
         subtitle={
           <p
             className="font-mono text-xs text-cream/80 uppercase tracking-widest"
             style={{ fontFamily: 'var(--font-mono)' }}
           >
-            {SEASON}
+            {season}
           </p>
         }
       />
 
       <EventInfoStrip />
 
-      {/* Filter + List */}
       <section className="bg-paper py-16 md:py-24">
         <div className="max-w-7xl mx-auto px-6">
           {showBanner && <FeaturedEventBanner />}
@@ -51,7 +53,7 @@ export default function Events() {
           <div data-reveal className="mb-12">
             <SectionLabel className="mb-6">Filter by Category</SectionLabel>
             <CategoryFilter
-              categories={CATEGORIES}
+              categories={categories}
               active={filter}
               onChange={setFilter}
               variant="light"

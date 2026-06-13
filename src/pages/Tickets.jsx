@@ -5,13 +5,15 @@ import SectionLabel from '../components/ui/SectionLabel'
 import EventSummaryCard from '../components/events/EventSummaryCard'
 import RsvpForm from '../components/events/RsvpForm'
 import RsvpSuccess from '../components/events/RsvpSuccess'
-import { getEventById, isEventBookable } from '../data/events'
+import { useCms } from '../context/CmsContext'
+import { getEventById, isEventBookable } from '../services/cms/events'
 import { useDocumentTitle } from '../hooks/useDocumentTitle'
 import { useScrollReveal } from '../hooks/useScrollReveal'
 
 export default function Tickets() {
   const { eventId } = useParams()
-  const event = getEventById(eventId)
+  const { events } = useCms()
+  const event = getEventById(events, eventId)
   const [success, setSuccess] = useState(null)
 
   useDocumentTitle(

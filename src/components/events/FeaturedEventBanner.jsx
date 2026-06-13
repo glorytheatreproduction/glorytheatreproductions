@@ -3,11 +3,11 @@ import SectionLabel from '../ui/SectionLabel'
 import DateBlock from '../ui/DateBlock'
 import AvailabilityBadge from '../ui/AvailabilityBadge'
 import GoldButton from '../ui/GoldButton'
-import { events } from '../../data/events'
-
-const featured = events.find((e) => e.featured)
+import { useCms } from '../../context/CmsContext'
 
 export default function FeaturedEventBanner() {
+  const { events } = useCms()
+  const featured = events.find((e) => e.featured)
   if (!featured) return null
 
   return (

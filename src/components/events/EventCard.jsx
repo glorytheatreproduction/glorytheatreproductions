@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom'
 import DateBlock from '../ui/DateBlock'
 import AvailabilityBadge from '../ui/AvailabilityBadge'
-import { isEventBookable } from '../../data/events'
+import { isEventBookable } from '../../services/cms/events'
 
 export default function EventCard({ event, visible = true }) {
   const bookable = isEventBookable(event)

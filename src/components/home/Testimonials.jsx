@@ -1,42 +1,28 @@
-import SectionLabel from '../ui/SectionLabel'
-import { testimonials } from '../../data/blog'
+import { useCms } from '../../context/CmsContext'
 
 export default function Testimonials() {
-  return (
-    <section className="bg-paper py-24 md:py-32">
-      <div className="max-w-7xl mx-auto px-6">
-        <div data-reveal>
-          <SectionLabel className="mb-12">What People Say</SectionLabel>
-        </div>
+  const { testimonials } = useCms()
 
-        <div className="testimonials-scroll" data-reveal data-reveal-delay="1">
-          {testimonials.map((t) => (
-            <blockquote key={t.name} className="p-8">
-              <span
-                className="font-display text-[80px] leading-none text-gold block mb-4"
-                style={{ fontFamily: 'var(--font-display)' }}
-              >
-                &ldquo;
-              </span>
+  return (
+    <section className="section-dark bg-void py-24 md:py-32">
+      <div className="max-w-7xl mx-auto px-6">
+        <div className="grid md:grid-cols-3 gap-8">
+          {testimonials.map(({ quote, name, role }, index) => (
+            <blockquote
+              key={name}
+              data-reveal
+              data-reveal-delay={String((index % 3) + 1)}
+              className="border border-border-dark p-8"
+            >
               <p
-                className="font-heading italic text-ink text-lg md:text-xl leading-relaxed mb-8"
+                className="font-heading italic text-cream text-xl leading-relaxed mb-6"
                 style={{ fontFamily: 'var(--font-heading)' }}
               >
-                {t.quote}
+                &ldquo;{quote}&rdquo;
               </p>
               <footer>
-                <p
-                  className="font-mono text-xs uppercase tracking-widest text-ink-muted"
-                  style={{ fontFamily: 'var(--font-mono)' }}
-                >
-                  {t.name}
-                </p>
-                <p
-                  className="font-mono text-[10px] uppercase tracking-widest text-gold-muted mt-1"
-                  style={{ fontFamily: 'var(--font-mono)' }}
-                >
-                  {t.role}
-                </p>
+                <cite className="not-italic font-display text-gold block">{name}</cite>
+                <span className="font-mono text-[10px] uppercase tracking-widest text-cream/70">{role}</span>
               </footer>
             </blockquote>
           ))}

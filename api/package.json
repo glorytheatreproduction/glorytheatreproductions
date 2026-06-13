@@ -1,0 +1,11 @@
+{
+  "name": "glory-theatre-api",
+  "private": true,
+  "type": "commonjs",
+  "dependencies": {
+    "@sendgrid/mail": "^8.1.0",
+    "canvas": "^2.11.2",
+    "googleapis": "^128.0.0",
+    "qrcode": "^1.5.3"
+  }
+}

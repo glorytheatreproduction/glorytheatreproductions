@@ -5,11 +5,15 @@ import CategoryFilter from '../components/events/CategoryFilter'
 import FeaturedPost from '../components/blog/FeaturedPost'
 import BlogCard from '../components/blog/BlogCard'
 import BlogSearch from '../components/blog/BlogSearch'
-import { blogPosts, BLOG_CATEGORIES, filterPosts } from '../data/blog'
+import { useCms } from '../context/CmsContext'
+import { filterPosts } from '../services/cms/blog'
 import { useDocumentTitle } from '../hooks/useDocumentTitle'
 import { useScrollReveal } from '../hooks/useScrollReveal'
 
 export default function Blog() {
+  const { blogPosts, blogCategories, pageHeroes } = useCms()
+  const hero = pageHeroes.blog
+
   useDocumentTitle(
     'Blog & Stories — Glory Theatre Productions',
     'Read behind-the-scenes stories, rehearsal diaries, artist spotlights, and articles from Glory Theatre Productions.'
@@ -20,32 +24,30 @@ export default function Blog() {
   const [search, setSearch] = useState('')
 
   const featured = blogPosts.find((p) => p.featured)
-
   const showFeatured = featured && category === 'all' && !search.trim()
 
   const filtered = useMemo(() => {
-    const posts = filterPosts({ category, search })
+    const posts = filterPosts(blogPosts, { category, search })
     return showFeatured ? posts.filter((p) => !p.featured) : posts
-  }, [category, search, showFeatured])
+  }, [blogPosts, category, search, showFeatured])
 
   return (
     <>
       <PageHero
-        label="Stories & Articles"
-        title="Blog & Stories"
+        label={hero.label}
+        title={hero.title}
         subtitle={
           <p className="text-cream/85 text-base max-w-xl">
-            Connect with our journey, ideas, and community through behind-the-scenes stories and artist features.
+            {hero.subtitle}
           </p>
         }
       />
 
-      {/* Search + Filters */}
       <section className="bg-parchment py-8 border-b border-border-light sticky top-[72px] z-30">
         <div className="max-w-7xl mx-auto px-6 space-y-6">
           <BlogSearch value={search} onChange={setSearch} />
           <CategoryFilter
-            categories={BLOG_CATEGORIES}
+            categories={blogCategories}
             active={category}
             onChange={setCategory}
             variant="light"
@@ -53,7 +55,6 @@ export default function Blog() {
         </div>
       </section>
 
-      {/* Featured */}
       {showFeatured && (
         <section className="bg-paper pt-16 pb-8">
           <div className="max-w-7xl mx-auto px-6">
@@ -63,7 +64,6 @@ export default function Blog() {
         </section>
       )}
 
-      {/* Grid */}
       <section className="bg-paper py-16 md:py-24">
         <div className="max-w-7xl mx-auto px-6">
           <div data-reveal>

@@ -2,13 +2,15 @@ import { Link, useParams, Navigate } from 'react-router-dom'
 import PageHero from '../components/ui/PageHero'
 import BlogArticle from '../components/blog/BlogArticle'
 import RelatedPosts from '../components/blog/RelatedPosts'
-import { getPostById, getRelatedPosts } from '../data/blog'
+import { useCms } from '../context/CmsContext'
+import { getPostById, getRelatedPosts } from '../services/cms/blog'
 import { useDocumentTitle } from '../hooks/useDocumentTitle'
 import { useScrollReveal } from '../hooks/useScrollReveal'
 
 export default function BlogPost() {
   const { postId } = useParams()
-  const post = getPostById(postId)
+  const { blogPosts } = useCms()
+  const post = getPostById(blogPosts, postId)
 
   useDocumentTitle(
     post ? `${post.title} — Glory Theatre Blog` : 'Post Not Found',
@@ -20,7 +22,7 @@ export default function BlogPost() {
     return <Navigate to="/blog" replace />
   }
 
-  const related = getRelatedPosts(post)
+  const related = getRelatedPosts(blogPosts, post)
 
   return (
     <>

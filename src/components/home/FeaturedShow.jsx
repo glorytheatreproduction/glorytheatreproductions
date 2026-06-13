@@ -3,11 +3,13 @@ import SectionLabel from '../ui/SectionLabel'
 import DateBlock from '../ui/DateBlock'
 import AvailabilityBadge from '../ui/AvailabilityBadge'
 import GoldButton from '../ui/GoldButton'
-import { events } from '../../data/events'
-
-const featured = events.find((e) => e.featured) || events[0]
+import { useCms } from '../../context/CmsContext'
 
 export default function FeaturedShow() {
+  const { events } = useCms()
+  const featured = events.find((e) => e.featured) || events[0]
+  if (!featured) return null
+
   return (
     <section className="bg-parchment border-t border-border-light relative isolate overflow-hidden">
       <div className="grid md:grid-cols-2 w-full min-h-[48vh] md:min-h-[52vh]">

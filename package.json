@@ -6,9 +6,15 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "dev:vercel": "vercel dev",
+    "cms:seed": "node scripts/seed-cms.mjs",
+    "cms:create-admin": "node scripts/create-admin.mjs",
+    "cms:migrate": "node scripts/run-migrations.mjs",
+    "cms:setup": "node scripts/setup-cms.mjs"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.108.1",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-router-dom": "^7.6.0"
@@ -16,6 +22,7 @@
   "devDependencies": {
     "@tailwindcss/vite": "^4.1.8",
     "@vitejs/plugin-react": "^4.4.1",
+    "pg": "^8.21.0",
     "tailwindcss": "^4.1.8",
     "vite": "^6.3.5"
   }

@@ -1,13 +1,15 @@
-import { useParams, Navigate } from 'react-router-dom'
-import PageHero from '../components/ui/PageHero'
-import MasonryGrid from '../components/gallery/MasonryGrid'
-import { getAlbumById, getCategoryLabel } from '../data/gallery'
+import { Link, useParams, Navigate } from 'react-router-dom'
+import SectionLabel from '../components/ui/SectionLabel'
+import AlbumCollageGrid from '../components/gallery/AlbumCollageGrid'
+import { useCms } from '../context/CmsContext'
+import { getAlbumById } from '../services/cms/gallery'
 import { useDocumentTitle } from '../hooks/useDocumentTitle'
 import { useScrollReveal } from '../hooks/useScrollReveal'
 
 export default function GalleryAlbum() {
   const { albumId } = useParams()
-  const album = getAlbumById(albumId)
+  const { galleryAlbums, getCategoryLabel } = useCms()
+  const album = getAlbumById(galleryAlbums, albumId)
 
   useDocumentTitle(
     album ? `${album.title} — Gallery` : 'Album Not Found',
@@ -23,32 +25,46 @@ export default function GalleryAlbum() {
 
   return (
     <>
-      <PageHero
-        label={getCategoryLabel(album.category)}
-        title={album.title}
-        image={album.cover}
-        titleSize="detail"
-        backLink={{ to: '/gallery', label: 'All Albums' }}
-      >
-        <p
-          className="font-mono text-[10px] uppercase tracking-widest text-cream/75"
-          style={{ fontFamily: 'var(--font-mono)' }}
-        >
-          {album.date} · {photoCount} {photoCount === 1 ? 'Photo' : 'Photos'}
-        </p>
-      </PageHero>
+      <section className="section-dark relative bg-void border-b border-border-dark pt-32 pb-12">
+        <div className="max-w-7xl mx-auto px-6">
+          <Link
+            to="/gallery"
+            className="font-mono text-[10px] uppercase tracking-widest text-cream/85 hover:text-gold transition-colors mb-8 inline-block"
+            style={{ fontFamily: 'var(--font-mono)' }}
+          >
+            ← All Albums
+          </Link>
+
+          <p
+            className="font-mono text-[11px] uppercase tracking-[0.18em] text-gold-light mb-2"
+            style={{ fontFamily: 'var(--font-mono)' }}
+          >
+            {getCategoryLabel(album.category)}
+          </p>
+          <h1
+            className="font-display text-3xl md:text-5xl text-cream leading-tight mb-4"
+            style={{ fontFamily: 'var(--font-display)' }}
+          >
+            {album.title}
+          </h1>
+          {album.description ? (
+            <p className="text-cream/85 text-base leading-relaxed max-w-3xl mb-4">
+              {album.description}
+            </p>
+          ) : null}
+          <p
+            className="font-mono text-[10px] uppercase tracking-widest text-cream/75"
+            style={{ fontFamily: 'var(--font-mono)' }}
+          >
+            {album.date} · {photoCount} {photoCount === 1 ? 'Photo' : 'Photos'}
+          </p>
+        </div>
+      </section>
 
       <section className="bg-parchment py-16 md:py-24">
         <div className="max-w-7xl mx-auto px-6">
-          <p
-            className="font-heading italic text-ink text-xl md:text-2xl leading-relaxed max-w-3xl mb-12"
-            style={{ fontFamily: 'var(--font-heading)' }}
-            data-reveal
-          >
-            {album.description}
-          </p>
-
-          <MasonryGrid images={album.images} />
+          <SectionLabel className="mb-8">Album Preview</SectionLabel>
+          <AlbumCollageGrid images={album.images} albumId={album.id} />
         </div>
       </section>
     </>

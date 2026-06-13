@@ -1,7 +1,9 @@
 node_modules/
+api/node_modules/
 dist/
 *.zip
 .DS_Store
 *.log
 .env
-.env.*
+.env.local
+.env.*.local

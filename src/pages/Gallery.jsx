@@ -1,13 +1,16 @@
 import { useState } from 'react'
 import PageHero from '../components/ui/PageHero'
-import SectionLabel from '../components/ui/SectionLabel'
 import CategoryFilter from '../components/events/CategoryFilter'
-import AlbumCard from '../components/gallery/AlbumCard'
-import { GALLERY_CATEGORIES, filterAlbums } from '../data/gallery'
+import GalleryAlbums from '../components/gallery/GalleryAlbums'
+import { useCms } from '../context/CmsContext'
+import { filterAlbums } from '../services/cms/gallery'
 import { useDocumentTitle } from '../hooks/useDocumentTitle'
 import { useScrollReveal } from '../hooks/useScrollReveal'
 
 export default function Gallery() {
+  const { galleryAlbums, galleryCategories, pageHeroes } = useCms()
+  const hero = pageHeroes.gallery
+
   useDocumentTitle(
     'Gallery — Glory Theatre Productions',
     'Browse photo albums from Glory Theatre Productions performances, choreography, spoken word, and behind-the-scenes moments.'
@@ -15,19 +18,19 @@ export default function Gallery() {
   useScrollReveal()
 
   const [filter, setFilter] = useState('all')
-  const filtered = filterAlbums(filter)
+  const filtered = filterAlbums(galleryAlbums, filter)
 
   return (
     <>
       <PageHero
-        label="Visual Gallery"
-        title="Show the Magic"
+        label={hero.label}
+        title={hero.title}
         subtitle={
           <p
             className="font-mono text-xs text-cream/80 uppercase tracking-widest"
             style={{ fontFamily: 'var(--font-mono)' }}
           >
-            Production albums · Behind the scenes · In motion
+            {hero.subtitle}
           </p>
         }
       />
@@ -35,7 +38,7 @@ export default function Gallery() {
       <section className="bg-paper py-8 border-b border-border-light sticky top-[72px] z-30">
         <div className="max-w-7xl mx-auto px-6">
           <CategoryFilter
-            categories={GALLERY_CATEGORIES}
+            categories={galleryCategories}
             active={filter}
             onChange={setFilter}
             variant="light"
@@ -45,18 +48,8 @@ export default function Gallery() {
 
       <section className="bg-parchment py-16 md:py-24">
         <div className="max-w-7xl mx-auto px-6">
-          <div data-reveal>
-            <SectionLabel className="mb-10">
-              {filter === 'all' ? 'All Albums' : GALLERY_CATEGORIES.find((c) => c.slug === filter)?.label}
-            </SectionLabel>
-          </div>
-
           {filtered.length > 0 ? (
-            <div className="grid md:grid-cols-2 gap-8" key={filter}>
-              {filtered.map((album, index) => (
-                <AlbumCard key={album.id} album={album} index={index} />
-              ))}
-            </div>
+            <GalleryAlbums albums={filtered} key={filter} />
           ) : (
             <div className="py-20 text-center" data-reveal>
               <p
