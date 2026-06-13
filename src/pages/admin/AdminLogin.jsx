@@ -4,7 +4,7 @@ import { useAuth } from '../../context/AuthContext'
 import { ADMIN_BTN, ADMIN_INPUT, ADMIN_LABEL, ADMIN_PANEL } from '../../components/admin/adminStyles'
 
 export default function AdminLogin() {
-  const { signIn, session, canAccessCms, isBlogWriter, loading, supabaseConfigured } = useAuth()
+  const { signIn, session, canAccessCms, isBlogWriter, isCheckInStaff, isStaff, loading, supabaseConfigured } = useAuth()
   const location = useLocation()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -12,7 +12,11 @@ export default function AdminLogin() {
   const [submitting, setSubmitting] = useState(false)
 
   if (!loading && session && canAccessCms) {
-    return <Navigate to={(location.state?.from) || (isBlogWriter ? '/admin/blog' : '/admin')} replace />
+    const destination = (location.state?.from)
+      || (isCheckInStaff && !isStaff && !isBlogWriter ? '/admin/check-in' : null)
+      || (isBlogWriter && !isStaff ? '/admin/blog' : null)
+      || '/admin'
+    return <Navigate to={destination} replace />
   }
 
   const onSubmit = async (e) => {

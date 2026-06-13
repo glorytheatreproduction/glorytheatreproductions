@@ -21,6 +21,7 @@
 
 const { parseTicketPayload, normalizeEventId } = require('./ticket-payload.cjs');
 const { findRSVPByTicketId, updateCheckInStatus } = require('./google-sheets.cjs');
+const { verifyBearerAuth } = require('./cms-auth.cjs');
 
 /**
  * Validate admin token (if configured)
@@ -71,19 +72,18 @@ exports.handler = async (event, context) => {
   }
 
   try {
-    // Parse request body
     const body = JSON.parse(event.body || '{}');
     const { qrData, ticketId, adminToken } = body;
 
-    // Validate admin token if provided
-    if (adminToken && !validateAdminToken(adminToken)) {
+    const auth = await verifyBearerAuth(event);
+    if (!auth.ok && !validateAdminToken(adminToken)) {
       return {
         statusCode: 401,
         headers,
         body: JSON.stringify({
           success: false,
           status: 'unauthorized',
-          message: 'Invalid admin token',
+          message: 'Sign in with a ticket scanner account to verify tickets',
         }),
       };
     }

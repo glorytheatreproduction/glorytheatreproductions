@@ -13,12 +13,14 @@ import {
 } from '../../services/cms/members'
 
 const INVITE_ROLES = [
+  { value: 'check_in', label: 'Ticket Scanner (check-in only)' },
   { value: 'blog_writer', label: 'Blog Writer' },
   { value: 'editor', label: 'Editor (full CMS)' },
   { value: 'viewer', label: 'Viewer (no CMS access)' },
 ]
 
 const EDIT_ROLES = [
+  { value: 'check_in', label: 'Ticket Scanner' },
   { value: 'blog_writer', label: 'Blog Writer' },
   { value: 'editor', label: 'Editor' },
   { value: 'admin', label: 'Admin' },

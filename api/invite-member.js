@@ -1,6 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
 
-const ALLOWED_ROLES = new Set(['blog_writer', 'editor', 'viewer'])
+const ALLOWED_ROLES = new Set(['blog_writer', 'check_in', 'editor', 'viewer'])
 
 function json(res, statusCode, body) {
   for (const [key, value] of Object.entries(body.headers || {})) {

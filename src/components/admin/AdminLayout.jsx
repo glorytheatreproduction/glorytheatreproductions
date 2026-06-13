@@ -7,8 +7,9 @@ const NAV_LINKS = [
   { to: '/admin/home', label: 'Home Page', staffOnly: true },
   { to: '/admin/events', label: 'Events', staffOnly: true },
   { to: '/admin/gallery', label: 'Gallery', staffOnly: true },
-  { to: '/admin/blog', label: 'Blog' },
-  { to: '/admin/media', label: 'Media' },
+  { to: '/admin/blog', label: 'Blog', writerOk: true },
+  { to: '/admin/media', label: 'Media', writerOk: true },
+  { to: '/admin/check-in', label: 'Check-In', checkInOk: true },
   { to: '/admin/members', label: 'Members', adminOnly: true },
 ]
 
@@ -17,13 +18,15 @@ function roleLabel(role) {
 }
 
 export default function AdminLayout() {
-  const { signOut, profile, isStaff, isAdmin, isBlogWriter } = useAuth()
+  const { signOut, profile, isStaff, isAdmin, isBlogWriter, isCheckInStaff } = useAuth()
   const { pathname } = useLocation()
 
   const links = NAV_LINKS.filter((link) => {
     if (link.adminOnly) return isAdmin
     if (link.staffOnly) return isStaff
-    return isStaff || isBlogWriter
+    if (link.writerOk) return isStaff || isBlogWriter
+    if (link.checkInOk) return isStaff || isCheckInStaff
+    return false
   })
 
   return (
@@ -31,7 +34,9 @@ export default function AdminLayout() {
       <header className="border-b border-border-light bg-paper">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-6 py-4">
           <div>
-            <p className="font-display text-lg text-ink">Glory Theatre CMS</p>
+            <p className="font-display text-lg text-ink">
+              {isCheckInStaff && !isStaff && !isBlogWriter ? 'Glory Theatre Check-In' : 'Glory Theatre CMS'}
+            </p>
             <p className="font-mono text-[10px] uppercase tracking-widest text-ink-muted">
               {profile?.email || 'Member'} · {roleLabel(profile?.role)}
             </p>
@@ -72,8 +77,16 @@ export default function AdminLayout() {
 }
 
 export function AdminGuard({ children }) {
-  const { loading, session, canAccessCms, isBlogWriter, isStaff, supabaseConfigured } = useAuth()
-  const location = useLocation()
+  const {
+    loading,
+    session,
+    canAccessCms,
+    isBlogWriter,
+    isCheckInStaff,
+    isStaff,
+    supabaseConfigured,
+  } = useAuth()
+  const { pathname } = useLocation()
 
   if (!supabaseConfigured) {
     return (
@@ -93,7 +106,7 @@ export function AdminGuard({ children }) {
   }
 
   if (!session) {
-    return <Navigate to="/admin/login" replace state={{ from: location.pathname }} />
+    return <Navigate to="/admin/login" replace state={{ from: pathname }} />
   }
 
   if (!canAccessCms) {
@@ -102,7 +115,7 @@ export function AdminGuard({ children }) {
         <div className="max-w-md rounded border border-border-light bg-paper p-8 text-center">
           <h1 className="font-display text-2xl text-ink">Access Denied</h1>
           <p className="mt-4 text-sm text-ink-muted">
-            Your account does not have CMS access yet. Ask an admin to sign you up as a blog writer.
+            Your account does not have access yet. Ask an admin to assign you a role.
           </p>
           <Link to="/" className="mt-6 inline-block text-sm text-gold">Return to site</Link>
         </div>
@@ -110,7 +123,11 @@ export function AdminGuard({ children }) {
     )
   }
 
-  if (isBlogWriter && !isStaff && (location.pathname === '/admin' || location.pathname === '/admin/')) {
+  if (isCheckInStaff && !isStaff && !isBlogWriter && !pathname.startsWith('/admin/check-in')) {
+    return <Navigate to="/admin/check-in" replace />
+  }
+
+  if (isBlogWriter && !isStaff && !isCheckInStaff && (pathname === '/admin' || pathname === '/admin/')) {
     return <Navigate to="/admin/blog" replace />
   }
 

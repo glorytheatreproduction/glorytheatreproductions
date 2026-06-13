@@ -22,6 +22,7 @@
     "@sendgrid/mail": "^8.1.0",
     "@supabase/supabase-js": "^2.108.1",
     "googleapis": "^128.0.0",
+    "html5-qrcode": "^2.3.8",
     "qrcode": "^1.5.3",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",

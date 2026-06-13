@@ -8,15 +8,20 @@ const cards = [
   { to: '/admin/events', title: 'Events', desc: 'Shows, dates, images, RSVP capacity' },
   { to: '/admin/gallery', title: 'Gallery', desc: 'Albums and photo collages' },
   { to: '/admin/blog', title: 'Blog', desc: 'Articles and featured posts' },
+  { to: '/admin/check-in', title: 'Check-In', desc: 'Scan and verify guest tickets at the door', staffOrCheckIn: true },
   { to: '/admin/media', title: 'Media', desc: 'Upload and manage images' },
-  { to: '/admin/members', title: 'Members', desc: 'Invite blog writers and manage CMS roles', adminOnly: true },
+  { to: '/admin/members', title: 'Members', desc: 'Invite blog writers, ticket scanners, and manage roles', adminOnly: true },
 ]
 
 export default function AdminDashboard() {
   const { cmsEnabled, events, galleryAlbums, blogPosts } = useCms()
-  const { isAdmin } = useAuth()
+  const { isAdmin, isStaff, isCheckInStaff } = useAuth()
 
-  const visibleCards = cards.filter((card) => !card.adminOnly || isAdmin)
+  const visibleCards = cards.filter((card) => {
+    if (card.adminOnly) return isAdmin
+    if (card.staffOrCheckIn) return isStaff || isCheckInStaff
+    return true
+  })
 
   return (
     <div>

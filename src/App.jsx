@@ -18,6 +18,7 @@ import AdminGallery from './pages/admin/AdminGallery'
 import AdminBlog from './pages/admin/AdminBlog'
 import AdminMedia from './pages/admin/AdminMedia'
 import AdminMembers from './pages/admin/AdminMembers'
+import AdminCheckIn from './pages/admin/AdminCheckIn'
 
 export default function App() {
   return (
@@ -49,6 +50,7 @@ export default function App() {
           <Route path="gallery" element={<StaffRoute><AdminGallery /></StaffRoute>} />
           <Route path="blog" element={<AdminBlog />} />
           <Route path="media" element={<AdminMedia />} />
+          <Route path="check-in" element={<AdminCheckIn />} />
           <Route path="members" element={<AdminRoute><AdminMembers /></AdminRoute>} />
         </Route>
       </Routes>
