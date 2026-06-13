@@ -19,7 +19,7 @@ export default function Tickets() {
     event ? `Reserve Tickets — ${event.title}` : 'Tickets — Glory Theatre Productions',
     event ? `Reserve your free seat for ${event.title}. Digital ticket delivered by email.` : undefined
   )
-  useScrollReveal()
+  useScrollReveal(eventId, ready, Boolean(success))
 
   if (ready && !event) {
     return <Navigate to="/events" replace />

@@ -3,12 +3,9 @@ import SectionLabel from '../ui/SectionLabel'
 import DateBlock from '../ui/DateBlock'
 import AvailabilityBadge from '../ui/AvailabilityBadge'
 import GoldButton from '../ui/GoldButton'
-import { useCms } from '../../context/CmsContext'
 import { isEventBookable } from '../../services/cms/events'
 
-export default function FeaturedEventBanner() {
-  const { events } = useCms()
-  const featured = events.find((e) => e.featured)
+export default function FeaturedEventBanner({ featured }) {
   if (!featured) return null
 
   const bookable = isEventBookable(featured)

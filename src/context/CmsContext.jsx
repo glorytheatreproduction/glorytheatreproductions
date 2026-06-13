@@ -41,16 +41,38 @@ export function CmsProvider({ children }) {
     }
 
     try {
-      const [remoteEvents, remoteAlbums, remotePosts, siteContent] = await Promise.all([
+      const [eventsResult, albumsResult, postsResult, contentResult] = await Promise.allSettled([
         fetchPublishedEvents(),
         fetchPublishedAlbums(),
         fetchPublishedPosts(),
         fetchAllSiteContent(),
       ])
 
-      if (remoteEvents !== null) setEvents(remoteEvents)
-      if (remoteAlbums !== null) setGalleryAlbums(remoteAlbums)
-      if (remotePosts !== null) setBlogPosts(remotePosts)
+      if (eventsResult.status === 'fulfilled' && eventsResult.value !== null) {
+        const remoteEvents = eventsResult.value
+        setEvents(remoteEvents.length > 0 ? remoteEvents : defaultEvents)
+      } else if (eventsResult.status === 'rejected') {
+        console.error('[CMS] failed to load events, using defaults', eventsResult.reason)
+      }
+
+      if (albumsResult.status === 'fulfilled' && albumsResult.value !== null) {
+        const remoteAlbums = albumsResult.value
+        setGalleryAlbums(remoteAlbums.length > 0 ? remoteAlbums : defaultAlbums)
+      } else if (albumsResult.status === 'rejected') {
+        console.error('[CMS] failed to load gallery, using defaults', albumsResult.reason)
+      }
+
+      if (postsResult.status === 'fulfilled' && postsResult.value !== null) {
+        const remotePosts = postsResult.value
+        setBlogPosts(remotePosts.length > 0 ? remotePosts : defaultPosts)
+      } else if (postsResult.status === 'rejected') {
+        console.error('[CMS] failed to load blog posts, using defaults', postsResult.reason)
+      }
+
+      const siteContent = contentResult.status === 'fulfilled' ? contentResult.value : {}
+      if (contentResult.status === 'rejected') {
+        console.error('[CMS] failed to load site content, using defaults', contentResult.reason)
+      }
 
       setHomeHero(mergeContent(homeHeroDefaults, siteContent[CONTENT_KEYS.homeHero]))
       setHomeMission(mergeContent(homeMissionDefaults, siteContent[CONTENT_KEYS.homeMission]))
@@ -66,7 +88,7 @@ export function CmsProvider({ children }) {
       })
       setSocialLinks(mergeContent(socialLinksDefaults, siteContent[CONTENT_KEYS.settingsSocialLinks]))
     } catch (err) {
-      console.error('[CMS] failed to load remote content, using defaults', err)
+      console.error('[CMS] unexpected load failure, using defaults', err)
     } finally {
       setLoading(false)
     }

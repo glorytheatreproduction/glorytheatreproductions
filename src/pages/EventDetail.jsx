@@ -16,7 +16,7 @@ export default function EventDetail() {
     event ? `${event.title} — Glory Theatre Productions` : 'Event Not Found',
     event?.description
   )
-  useScrollReveal()
+  useScrollReveal(eventId, ready)
 
   if (ready && !event) {
     return <Navigate to="/events" replace />
