@@ -2,14 +2,14 @@
  * Ticket Generator Module
  * 
  * Generates high-quality PNG tickets for dance and theatre events.
- * Designed for Netlify Functions with node-canvas.
+ * Designed for serverless with @napi-rs/canvas (prebuilt binaries, no native compile).
  * 
  * Usage:
  * const { generateTicket } = require('./ticket-generator');
  * const ticketBuffer = await generateTicket(ticketData);
  */
 
-const { createCanvas, loadImage, registerFont } = require('canvas');
+const { createCanvas, loadImage } = require('@napi-rs/canvas');
 const QRCode = require('qrcode');
 
 /**
@@ -297,6 +297,7 @@ async function generateTicket(ticketData) {
     attendeeName,
     ticketId,
     logoPath,
+    secretKey,
   } = ticketData;
 
   // Validate required fields

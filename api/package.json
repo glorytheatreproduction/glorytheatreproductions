@@ -2,9 +2,12 @@
   "name": "glory-theatre-api",
   "private": true,
   "type": "commonjs",
+  "engines": {
+    "node": "20.x"
+  },
   "dependencies": {
+    "@napi-rs/canvas": "^0.1.68",
     "@sendgrid/mail": "^8.1.0",
-    "canvas": "^2.11.2",
     "googleapis": "^128.0.0",
     "qrcode": "^1.5.3"
   }
