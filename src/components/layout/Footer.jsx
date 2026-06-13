@@ -1,5 +1,7 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { SOCIAL_PLATFORMS } from '../../config/contentDefaults'
+import { useCms } from '../../context/CmsContext'
 import MarqueeBand from './MarqueeBand'
 
 const quickLinks = [
@@ -8,16 +10,19 @@ const quickLinks = [
   { to: '/blog', label: 'Blog' },
 ]
 
-const socialLinks = [
-  { label: 'Facebook', href: '#' },
-  { label: 'Instagram', href: '#' },
-  { label: 'Twitter', href: '#' },
-  { label: 'YouTube', href: '#' },
-]
-
 export default function Footer() {
+  const { socialLinks } = useCms()
   const [email, setEmail] = useState('')
   const [submitted, setSubmitted] = useState(false)
+
+  const connectLinks = useMemo(
+    () =>
+      SOCIAL_PLATFORMS.map(({ key, label }) => ({
+        label,
+        href: socialLinks[key]?.trim() || '',
+      })).filter(({ href }) => href && href !== '#'),
+    [socialLinks]
+  )
 
   const handleSubmit = (e) => {
     e.preventDefault()
@@ -85,19 +90,25 @@ export default function Footer() {
               >
                 Connect
               </h4>
-              <ul className="space-y-1">
-                {socialLinks.map(({ label, href }) => (
-                  <li key={label}>
-                    <a
-                      href={href}
-                      className="text-cream/90 text-sm leading-tight hover:text-gold transition-colors"
-                      aria-label={label}
-                    >
-                      {label}
-                    </a>
-                  </li>
-                ))}
-              </ul>
+              {connectLinks.length ? (
+                <ul className="space-y-1">
+                  {connectLinks.map(({ label, href }) => (
+                    <li key={label}>
+                      <a
+                        href={href}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-cream/90 text-sm leading-tight hover:text-gold transition-colors"
+                        aria-label={label}
+                      >
+                        {label}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="text-cream/60 text-sm leading-tight">Follow us online soon.</p>
+              )}
             </div>
 
             {/* Newsletter */}

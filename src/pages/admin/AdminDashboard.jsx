@@ -4,7 +4,7 @@ import { useCms } from '../../context/CmsContext'
 import { useAuth } from '../../context/AuthContext'
 
 const cards = [
-  { to: '/admin/home', title: 'Home Page', desc: 'Hero, mission, join CTA, testimonials, season label' },
+  { to: '/admin/home', title: 'Home Page', desc: 'Hero, mission, social links, testimonials, season label' },
   { to: '/admin/events', title: 'Events', desc: 'Shows, dates, images, RSVP capacity' },
   { to: '/admin/gallery', title: 'Gallery', desc: 'Albums and photo collages' },
   { to: '/admin/blog', title: 'Blog', desc: 'Articles and featured posts' },

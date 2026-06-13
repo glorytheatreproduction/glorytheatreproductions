@@ -8,6 +8,8 @@ import {
   homeMissionDefaults,
   pageHeroDefaults,
   seasonDefaults,
+  socialLinksDefaults,
+  SOCIAL_PLATFORMS,
   testimonialsDefaults,
   mergeContent,
 } from '../../config/contentDefaults'
@@ -38,6 +40,7 @@ export default function AdminHome() {
   const [season, setSeason] = useState(seasonDefaults)
   const [pageHeroes, setPageHeroes] = useState(pageHeroDefaults)
   const [testimonials, setTestimonials] = useState(testimonialsDefaults.items)
+  const [socialLinks, setSocialLinks] = useState(socialLinksDefaults)
   const [status, setStatus] = useState('')
   const [saving, setSaving] = useState(false)
 
@@ -51,7 +54,8 @@ export default function AdminHome() {
       fetchSiteContent(CONTENT_KEYS.pageGalleryHero),
       fetchSiteContent(CONTENT_KEYS.pageBlogHero),
       fetchSiteContent(CONTENT_KEYS.homeTestimonials),
-    ]).then(([h, m, j, s, pe, pg, pb, t]) => {
+      fetchSiteContent(CONTENT_KEYS.settingsSocialLinks),
+    ]).then(([h, m, j, s, pe, pg, pb, t, social]) => {
       setHero(mergeContent(homeHeroDefaults, h))
       setMission(mergeContent(homeMissionDefaults, m))
       setJoin(mergeContent(homeJoinDefaults, j))
@@ -62,6 +66,7 @@ export default function AdminHome() {
         blog: mergeContent(pageHeroDefaults.blog, pb),
       })
       if (t?.items) setTestimonials(t.items)
+      setSocialLinks(mergeContent(socialLinksDefaults, social))
     }).catch((err) => setStatus(err.message))
   }, [])
 
@@ -85,6 +90,7 @@ export default function AdminHome() {
         upsertSiteContent(CONTENT_KEYS.pageGalleryHero, pageHeroes.gallery),
         upsertSiteContent(CONTENT_KEYS.pageBlogHero, pageHeroes.blog),
         upsertSiteContent(CONTENT_KEYS.homeTestimonials, { items: cleanedTestimonials }),
+        upsertSiteContent(CONTENT_KEYS.settingsSocialLinks, socialLinks),
       ])
       setStatus('Saved successfully.')
     } catch (err) {
@@ -131,6 +137,21 @@ export default function AdminHome() {
         <TextField label="Label" value={join.label} onChange={(v) => setJoin({ ...join, label: v })} />
         <TextField label="Title" value={join.title} onChange={(v) => setJoin({ ...join, title: v })} />
         <TextArea label="Description" value={join.description} onChange={(v) => setJoin({ ...join, description: v })} />
+      </section>
+
+      <section className={`${ADMIN_PANEL} space-y-4`}>
+        <h2 className="font-display text-xl">Social Media Links</h2>
+        <p className="text-sm text-ink-muted">
+          Add full profile URLs. Empty fields are hidden in the site footer.
+        </p>
+        {SOCIAL_PLATFORMS.map(({ key, label }) => (
+          <TextField
+            key={key}
+            label={label}
+            value={socialLinks[key]}
+            onChange={(v) => setSocialLinks({ ...socialLinks, [key]: v })}
+          />
+        ))}
       </section>
 
       <section className={`${ADMIN_PANEL} space-y-4`}>

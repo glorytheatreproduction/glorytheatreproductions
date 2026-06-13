@@ -9,6 +9,7 @@ export const CONTENT_KEYS = {
   pageEventsHero: 'page.events.hero.v1',
   pageGalleryHero: 'page.gallery.hero.v1',
   pageBlogHero: 'page.blog.hero.v1',
+  settingsSocialLinks: 'settings.social.v1',
 }
 
 export const homeHeroDefaults = {
@@ -60,6 +61,22 @@ export const pageHeroDefaults = {
 }
 
 export const seasonDefaults = { season: 'Season 25–26' }
+
+export const socialLinksDefaults = {
+  facebook: '',
+  instagram: '',
+  twitter: '',
+  youtube: '',
+  tiktok: '',
+}
+
+export const SOCIAL_PLATFORMS = [
+  { key: 'facebook', label: 'Facebook' },
+  { key: 'instagram', label: 'Instagram' },
+  { key: 'twitter', label: 'X (Twitter)' },
+  { key: 'youtube', label: 'YouTube' },
+  { key: 'tiktok', label: 'TikTok' },
+]
 
 export const testimonialsDefaults = { items: defaultTestimonials }
 

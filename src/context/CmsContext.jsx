@@ -7,6 +7,7 @@ import {
   mergeContent,
   pageHeroDefaults,
   seasonDefaults,
+  socialLinksDefaults,
   testimonialsDefaults,
 } from '../config/contentDefaults'
 import { events as defaultEvents, SEASON as defaultSeason, CATEGORIES } from '../data/events'
@@ -31,6 +32,7 @@ export function CmsProvider({ children }) {
   const [homeMission, setHomeMission] = useState(homeMissionDefaults)
   const [homeJoin, setHomeJoin] = useState(homeJoinDefaults)
   const [pageHeroes, setPageHeroes] = useState(pageHeroDefaults)
+  const [socialLinks, setSocialLinks] = useState(socialLinksDefaults)
 
   const load = useCallback(async () => {
     if (!supabaseIsConfigured) {
@@ -62,6 +64,7 @@ export function CmsProvider({ children }) {
         gallery: mergeContent(pageHeroDefaults.gallery, siteContent[CONTENT_KEYS.pageGalleryHero]),
         blog: mergeContent(pageHeroDefaults.blog, siteContent[CONTENT_KEYS.pageBlogHero]),
       })
+      setSocialLinks(mergeContent(socialLinksDefaults, siteContent[CONTENT_KEYS.settingsSocialLinks]))
     } catch (err) {
       console.error('[CMS] failed to load remote content, using defaults', err)
     } finally {
@@ -85,6 +88,7 @@ export function CmsProvider({ children }) {
       homeMission,
       homeJoin,
       pageHeroes,
+      socialLinks,
       categories: CATEGORIES,
       galleryCategories: GALLERY_CATEGORIES,
       blogCategories: BLOG_CATEGORIES,
@@ -103,6 +107,7 @@ export function CmsProvider({ children }) {
       homeMission,
       homeJoin,
       pageHeroes,
+      socialLinks,
       load,
     ]
   )
