@@ -3,6 +3,9 @@
   "version": "2.0.0",
   "description": "Glory Theatre Productions — React redesign",
   "type": "module",
+  "engines": {
+    "node": "20.x"
+  },
   "scripts": {
     "dev": "vite",
     "build": "vite build",
@@ -16,7 +19,11 @@
     "supabase:push": "supabase db push --yes"
   },
   "dependencies": {
+    "@napi-rs/canvas": "^0.1.68",
+    "@sendgrid/mail": "^8.1.0",
     "@supabase/supabase-js": "^2.108.1",
+    "googleapis": "^128.0.0",
+    "qrcode": "^1.5.3",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-router-dom": "^7.6.0"
