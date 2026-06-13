@@ -2,11 +2,14 @@ import { Link } from 'react-router-dom'
 import SectionLabel from '../ui/SectionLabel'
 import DateBlock from '../ui/DateBlock'
 import AvailabilityBadge from '../ui/AvailabilityBadge'
-import { events } from '../../data/events'
-
-const previewEvents = events.filter((e) => !e.featured).slice(0, 3)
+import { useCms } from '../../context/CmsContext'
+import { isEventBookable } from '../../services/cms/events'
 
 export default function EventsPreview() {
+  const { events } = useCms()
+  const previewEvents = events.filter((e) => !e.featured).slice(0, 3)
+  if (!previewEvents.length) return null
+
   return (
     <section className="bg-paper py-24 md:py-32">
       <div className="max-w-7xl mx-auto px-6">
@@ -49,9 +52,15 @@ export default function EventsPreview() {
                   {event.category}
                 </span>
 
-                <Link to={`/events/${event.id}/tickets`} className="gold-link text-sm block">
-                  Book →
-                </Link>
+                {isEventBookable(event) ? (
+                  <Link to={`/events/${event.id}/tickets`} className="gold-link text-sm block">
+                    Book →
+                  </Link>
+                ) : (
+                  <Link to={`/events/${event.id}`} className="gold-link text-sm block">
+                    View Details →
+                  </Link>
+                )}
               </div>
             </article>
           ))}

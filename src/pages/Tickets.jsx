@@ -5,15 +5,14 @@ import SectionLabel from '../components/ui/SectionLabel'
 import EventSummaryCard from '../components/events/EventSummaryCard'
 import RsvpForm from '../components/events/RsvpForm'
 import RsvpSuccess from '../components/events/RsvpSuccess'
-import { useCms } from '../context/CmsContext'
-import { getEventById, isEventBookable } from '../services/cms/events'
+import { isEventBookable } from '../services/cms/events'
 import { useDocumentTitle } from '../hooks/useDocumentTitle'
+import { useResolvedEvent } from '../hooks/useResolvedEvent'
 import { useScrollReveal } from '../hooks/useScrollReveal'
 
 export default function Tickets() {
   const { eventId } = useParams()
-  const { events } = useCms()
-  const event = getEventById(events, eventId)
+  const { event, loading, ready } = useResolvedEvent(eventId)
   const [success, setSuccess] = useState(null)
 
   useDocumentTitle(
@@ -22,8 +21,16 @@ export default function Tickets() {
   )
   useScrollReveal()
 
-  if (!event) {
+  if (ready && !event) {
     return <Navigate to="/events" replace />
+  }
+
+  if (loading || !event) {
+    return (
+      <section className="bg-paper py-32">
+        <div className="max-w-7xl mx-auto px-6 text-center text-ink-muted">Loading tickets…</div>
+      </section>
+    )
   }
 
   if (!isEventBookable(event)) {

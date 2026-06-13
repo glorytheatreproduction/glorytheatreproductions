@@ -3,15 +3,14 @@ import PageHero from '../components/ui/PageHero'
 import SectionLabel from '../components/ui/SectionLabel'
 import AvailabilityBadge from '../components/ui/AvailabilityBadge'
 import GoldButton from '../components/ui/GoldButton'
-import { useCms } from '../context/CmsContext'
-import { getEventById, isEventBookable } from '../services/cms/events'
+import { isEventBookable } from '../services/cms/events'
 import { useDocumentTitle } from '../hooks/useDocumentTitle'
+import { useResolvedEvent, splitEventDescription } from '../hooks/useResolvedEvent'
 import { useScrollReveal } from '../hooks/useScrollReveal'
 
 export default function EventDetail() {
   const { eventId } = useParams()
-  const { events } = useCms()
-  const event = getEventById(events, eventId)
+  const { event, loading, ready } = useResolvedEvent(eventId)
 
   useDocumentTitle(
     event ? `${event.title} — Glory Theatre Productions` : 'Event Not Found',
@@ -19,17 +18,27 @@ export default function EventDetail() {
   )
   useScrollReveal()
 
-  if (!event) {
+  if (ready && !event) {
     return <Navigate to="/events" replace />
   }
 
+  if (loading || !event) {
+    return (
+      <section className="bg-paper py-32">
+        <div className="max-w-7xl mx-auto px-6 text-center text-ink-muted">Loading event…</div>
+      </section>
+    )
+  }
+
   const bookable = isEventBookable(event)
+  const descriptionParts = splitEventDescription(event.longDescription || event.description)
 
   return (
     <>
       <PageHero
         label={event.category}
         title={event.title}
+        titleSize="detail"
         image={event.image}
         subtitle={
           <div className="flex flex-wrap items-center gap-4 mt-2">
@@ -55,7 +64,9 @@ export default function EventDetail() {
               <div data-reveal data-reveal-delay="1">
                 <SectionLabel className="mb-6">About This Event</SectionLabel>
                 <div className="prose prose-lg max-w-none text-ink-muted leading-relaxed space-y-6">
-                  <p>{event.longDescription || event.description}</p>
+                  {descriptionParts.map((paragraph, index) => (
+                    <p key={index}>{paragraph}</p>
+                  ))}
                 </div>
 
                 {event.tags?.length > 0 && (

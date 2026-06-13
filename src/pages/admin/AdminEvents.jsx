@@ -10,6 +10,7 @@ import {
   slugify,
 } from '../../components/admin/adminStyles'
 import { CATEGORIES } from '../../data/events'
+import { buildDateLabel } from '../../lib/eventDates'
 import { deleteEvent, fetchAllEvents, upsertEvent } from '../../services/cms/events'
 
 const emptyEvent = () => ({
@@ -72,9 +73,14 @@ export default function AdminEvents() {
     }
     setStatus('')
     try {
-      await upsertEvent({ ...form, id })
+      const payload = {
+        ...form,
+        id,
+        dateLabel: buildDateLabel(form),
+      }
+      await upsertEvent(payload)
       await load()
-      select({ ...form, id })
+      select(payload)
       setStatus('Event saved.')
     } catch (err) {
       setStatus(err.message)

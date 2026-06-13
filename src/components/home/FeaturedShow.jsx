@@ -4,11 +4,14 @@ import DateBlock from '../ui/DateBlock'
 import AvailabilityBadge from '../ui/AvailabilityBadge'
 import GoldButton from '../ui/GoldButton'
 import { useCms } from '../../context/CmsContext'
+import { isEventBookable } from '../../services/cms/events'
 
 export default function FeaturedShow() {
   const { events } = useCms()
   const featured = events.find((e) => e.featured) || events[0]
   if (!featured) return null
+
+  const bookable = isEventBookable(featured)
 
   return (
     <section className="bg-parchment border-t border-border-light relative isolate overflow-hidden">
@@ -51,7 +54,7 @@ export default function FeaturedShow() {
           </h2>
 
           <div className="flex flex-wrap gap-2 mb-4">
-            {featured.tags.map((tag) => (
+            {(featured.tags || []).map((tag) => (
               <span
                 key={tag}
                 className="px-3 py-1 border border-border-light text-ink-muted text-xs font-mono uppercase tracking-wider"
@@ -77,7 +80,11 @@ export default function FeaturedShow() {
           </div>
 
           <div className="flex flex-wrap gap-4">
-            <GoldButton to={`/events/${featured.id}/tickets`}>Reserve Seat</GoldButton>
+            {bookable ? (
+              <GoldButton to={`/events/${featured.id}/tickets`}>Reserve Seat</GoldButton>
+            ) : (
+              <GoldButton to={`/events/${featured.id}`}>View Event</GoldButton>
+            )}
             <Link to={`/events/${featured.id}`} className="gold-link text-sm self-center">
               Event Details →
             </Link>

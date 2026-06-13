@@ -10,7 +10,7 @@ import { useDocumentTitle } from '../hooks/useDocumentTitle'
 import { useScrollReveal } from '../hooks/useScrollReveal'
 
 export default function Events() {
-  const { events, season, categories, pageHeroes } = useCms()
+  const { events, season, categories, pageHeroes, loading } = useCms()
 
   useDocumentTitle(
     'Events & Productions — Glory Theatre Productions',
@@ -48,7 +48,11 @@ export default function Events() {
 
       <section className="bg-paper py-16 md:py-24">
         <div className="max-w-7xl mx-auto px-6">
-          {showBanner && <FeaturedEventBanner />}
+          {loading ? (
+            <p className="py-12 text-center text-ink-muted">Loading events…</p>
+          ) : null}
+
+          {showBanner && !loading ? <FeaturedEventBanner /> : null}
 
           <div data-reveal className="mb-12">
             <SectionLabel className="mb-6">Filter by Category</SectionLabel>
@@ -60,7 +64,7 @@ export default function Events() {
             />
           </div>
 
-          {tabEvents.length > 0 && (
+          {!loading && tabEvents.length > 0 && (
             <div data-reveal data-reveal-delay="1">
               <SectionLabel className="mb-6">
                 {showBanner ? 'Other Events' : 'All Events'}
@@ -74,7 +78,7 @@ export default function Events() {
           )}
 
           <div data-reveal data-reveal-delay="1">
-            {filtered.length === 0 ? (
+            {!loading && filtered.length === 0 ? (
               <div className="py-20 text-center">
                 <p
                   className="font-heading italic text-ink-muted text-2xl"

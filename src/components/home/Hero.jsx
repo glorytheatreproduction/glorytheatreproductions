@@ -1,10 +1,14 @@
 import GoldButton from '../ui/GoldButton'
 import OutlineButton from '../ui/OutlineButton'
 import { useCms } from '../../context/CmsContext'
+import { isEventBookable } from '../../services/cms/events'
 
 export default function Hero() {
   const { events, homeHero } = useCms()
   const featured = events.find((e) => e.featured) || events[0]
+  const ticketTarget = featured?.id
+    ? (isEventBookable(featured) ? `/events/${featured.id}/tickets` : `/events/${featured.id}`)
+    : '/events'
 
   return (
     <section className="section-dark relative min-h-screen flex items-center overflow-hidden">
@@ -51,7 +55,7 @@ export default function Hero() {
         </p>
 
         <div className="hero-cta flex flex-wrap gap-4">
-          <GoldButton to={`/events/${featured?.id || 'christian-creatives-workshop'}/tickets`}>
+          <GoldButton to={ticketTarget}>
             {homeHero.primaryCtaLabel}
           </GoldButton>
           <OutlineButton to="/events">{homeHero.secondaryCtaLabel}</OutlineButton>

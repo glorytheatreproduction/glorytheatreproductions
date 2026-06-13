@@ -48,9 +48,9 @@ export function CmsProvider({ children }) {
         fetchAllSiteContent(),
       ])
 
-      if (remoteEvents?.length) setEvents(remoteEvents)
-      if (remoteAlbums?.length) setGalleryAlbums(remoteAlbums)
-      if (remotePosts?.length) setBlogPosts(remotePosts)
+      if (remoteEvents !== null) setEvents(remoteEvents)
+      if (remoteAlbums !== null) setGalleryAlbums(remoteAlbums)
+      if (remotePosts !== null) setBlogPosts(remotePosts)
 
       setHomeHero(mergeContent(homeHeroDefaults, siteContent[CONTENT_KEYS.homeHero]))
       setHomeMission(mergeContent(homeMissionDefaults, siteContent[CONTENT_KEYS.homeMission]))

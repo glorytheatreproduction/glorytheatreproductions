@@ -4,11 +4,14 @@ import DateBlock from '../ui/DateBlock'
 import AvailabilityBadge from '../ui/AvailabilityBadge'
 import GoldButton from '../ui/GoldButton'
 import { useCms } from '../../context/CmsContext'
+import { isEventBookable } from '../../services/cms/events'
 
 export default function FeaturedEventBanner() {
   const { events } = useCms()
   const featured = events.find((e) => e.featured)
   if (!featured) return null
+
+  const bookable = isEventBookable(featured)
 
   return (
     <div data-reveal className="mb-16 -mx-6 md:-mx-0">
@@ -57,7 +60,11 @@ export default function FeaturedEventBanner() {
           </div>
 
           <div className="flex flex-wrap gap-4">
-            <GoldButton to={`/events/${featured.id}/tickets`}>Reserve Seat</GoldButton>
+            {bookable ? (
+              <GoldButton to={`/events/${featured.id}/tickets`}>Reserve Seat</GoldButton>
+            ) : (
+              <GoldButton to={`/events/${featured.id}`}>View Event</GoldButton>
+            )}
             <Link to={`/events/${featured.id}`} className="gold-link text-sm self-center">
               Event Details →
             </Link>
