@@ -15,9 +15,13 @@ Configured in `vercel.json`:
 
 | Setting | Value |
 |---------|--------|
+| Node.js | 20 (`.node-version` + `engines`) |
 | Build command | `npm run build` |
 | Output directory | `dist` |
 | SPA fallback | All non-`/api/*` routes → `index.html` |
+| Ticket PNGs | SVG + `sharp` (no `node-canvas`) |
+
+Legacy `netlify/` and `netlify.toml` are ignored on Vercel (see `.vercelignore`).
 
 ## Environment variables
 
