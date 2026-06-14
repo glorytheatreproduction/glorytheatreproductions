@@ -64,7 +64,7 @@ export default function GalleryAlbum() {
       <section className="bg-parchment py-16 md:py-24">
         <div className="max-w-7xl mx-auto px-6">
           <SectionLabel className="mb-8">Album Preview</SectionLabel>
-          <AlbumCollageGrid images={album.images} albumId={album.id} />
+          <AlbumCollageGrid images={album.images} cover={album.cover} albumId={album.id} />
         </div>
       </section>
     </>

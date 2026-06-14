@@ -1,7 +1,7 @@
 /** Facebook-style album preview — gapless collage with varied tile sizes. */
 
-export const FB_ALBUM_VIEW_MORE_THRESHOLD = 3
-export const FB_ALBUM_PREVIEW_COUNT = 3
+export const FB_ALBUM_VIEW_MORE_THRESHOLD = 4
+export const FB_ALBUM_PREVIEW_COUNT = 4
 
 export function facebookHiddenCount(total) {
   if (total <= FB_ALBUM_VIEW_MORE_THRESHOLD) return 0
@@ -13,7 +13,7 @@ export function facebookShowsMoreTile(total) {
 }
 
 export function facebookCollageLayout(total) {
-  const layout = total > FB_ALBUM_VIEW_MORE_THRESHOLD ? 5 : Math.max(1, Math.min(5, total))
+  const layout = total > FB_ALBUM_VIEW_MORE_THRESHOLD ? 5 : Math.max(1, Math.min(4, total))
 
   switch (layout) {
     case 1:

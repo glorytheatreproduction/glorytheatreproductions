@@ -12,14 +12,15 @@ function CollagePhoto({ image, className, onClick }) {
   return (
     <button
       type="button"
-      className={`group relative block min-h-0 h-full w-full overflow-hidden bg-surface ${className}`}
+      className={`group relative m-0 block min-h-0 h-full w-full overflow-hidden border-0 bg-void p-0 ${className}`}
       onClick={onClick}
     >
       <img
         src={image.src}
-        alt={image.title}
-        className="absolute inset-0 h-full w-full object-cover transition duration-200 group-hover:brightness-95"
+        alt={image.title || 'Album photo'}
+        className="absolute inset-0 block h-full w-full object-cover object-center transition duration-200 group-hover:brightness-95"
         loading="lazy"
+        draggable={false}
       />
     </button>
   )
@@ -29,19 +30,18 @@ function MorePhotosTile({ hiddenCount, previewSrc, onClick }) {
   return (
     <button
       type="button"
-      className="group relative flex h-full min-h-0 w-full items-center justify-center overflow-hidden bg-void"
+      className="group relative m-0 flex h-full min-h-0 w-full items-center justify-center overflow-hidden border-0 bg-void p-0"
       onClick={onClick}
       aria-label={`View ${hiddenCount} more photos`}
     >
-      {previewSrc ? (
-        <img
-          src={previewSrc}
-          alt=""
-          className="absolute inset-0 h-full w-full object-cover"
-          loading="lazy"
-          aria-hidden
-        />
-      ) : null}
+      <img
+        src={previewSrc}
+        alt=""
+        className="absolute inset-0 block h-full w-full object-cover object-center"
+        loading="lazy"
+        draggable={false}
+        aria-hidden
+      />
       <span className="absolute inset-0 bg-void/60 transition group-hover:bg-void/50" aria-hidden />
       <span className="relative flex flex-col items-center gap-1 text-cream">
         <span className="text-lg font-medium md:text-xl">+{hiddenCount}</span>
@@ -51,38 +51,57 @@ function MorePhotosTile({ hiddenCount, previewSrc, onClick }) {
   )
 }
 
-export default function AlbumCollageGrid({ images = [], albumId }) {
-  const [lightboxIndex, setLightboxIndex] = useState(null)
+function buildVisibleImages(images, cover) {
+  const withSrc = (images || []).filter((image) => image?.src?.trim())
+  if (withSrc.length) return withSrc
+  if (cover?.trim()) {
+    return [{ id: 'cover', src: cover.trim(), title: 'Album cover' }]
+  }
+  return []
+}
 
-  if (!images.length) {
+function imageForTile(index, visibleImages) {
+  return visibleImages[index] || visibleImages[index % visibleImages.length]
+}
+
+export default function AlbumCollageGrid({ images = [], cover = '', albumId }) {
+  const [lightboxIndex, setLightboxIndex] = useState(null)
+  const visibleImages = buildVisibleImages(images, cover)
+
+  if (!visibleImages.length) {
     return <p className="text-center text-sm text-ink-muted">No images in this album yet.</p>
   }
 
-  const total = images.length
+  const total = visibleImages.length
   const showsMore = facebookShowsMoreTile(total)
   const hiddenCount = facebookHiddenCount(total)
-  const previewItems = showsMore ? images.slice(0, FB_ALBUM_PREVIEW_COUNT) : images
+  const previewCount = showsMore ? FB_ALBUM_PREVIEW_COUNT : total
+  const previewItems = visibleImages.slice(0, previewCount)
   const { gridClass, tiles } = facebookCollageLayout(total)
+  const morePreviewSrc = visibleImages[FB_ALBUM_PREVIEW_COUNT]?.src
+    || visibleImages[visibleImages.length - 1]?.src
+    || cover?.trim()
+    || visibleImages[0].src
 
   return (
     <>
       <div
-        className={`grid h-[clamp(13rem,42vw,28rem)] gap-0 overflow-hidden border border-border-light sm:h-[clamp(15rem,38vw,30rem)] md:h-[clamp(17rem,34vw,32rem)] ${gridClass}`}
+        className={`grid h-[clamp(13rem,42vw,28rem)] gap-0 overflow-hidden bg-void leading-[0] sm:h-[clamp(15rem,38vw,30rem)] md:h-[clamp(17rem,34vw,32rem)] ${gridClass}`}
       >
         {previewItems.map((image, i) => (
           <CollagePhoto
-            key={image.id}
-            image={image}
+            key={`${image.id || image.src}-${i}`}
+            image={imageForTile(i, previewItems)}
             className={tiles[i]?.className || 'col-span-1 row-span-1'}
-            onClick={() => setLightboxIndex(i)}
+            onClick={() => setLightboxIndex(Math.min(i, total - 1))}
           />
         ))}
 
         {showsMore ? (
-          <div className={tiles[4]?.className || 'col-span-1 row-span-1'}>
+          <div className={`min-h-0 h-full ${tiles[4]?.className || 'col-span-1 row-span-1'}`}>
             <MorePhotosTile
               hiddenCount={hiddenCount}
-              previewSrc={images[4]?.src || ''}
+              previewSrc={morePreviewSrc}
               onClick={() => setLightboxIndex(FB_ALBUM_PREVIEW_COUNT)}
             />
           </div>
@@ -128,11 +147,11 @@ export default function AlbumCollageGrid({ images = [], albumId }) {
 
       {lightboxIndex !== null && (
         <Lightbox
-          images={images}
+          images={visibleImages}
           currentIndex={lightboxIndex}
           onClose={() => setLightboxIndex(null)}
-          onPrev={() => setLightboxIndex((i) => (i > 0 ? i - 1 : images.length - 1))}
-          onNext={() => setLightboxIndex((i) => (i < images.length - 1 ? i + 1 : 0))}
+          onPrev={() => setLightboxIndex((i) => (i > 0 ? i - 1 : visibleImages.length - 1))}
+          onNext={() => setLightboxIndex((i) => (i < visibleImages.length - 1 ? i + 1 : 0))}
         />
       )}
     </>

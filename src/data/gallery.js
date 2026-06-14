@@ -1,5 +1,6 @@
 export const GALLERY_CATEGORIES = [
   { label: 'All Albums', slug: 'all' },
+  { label: 'Production', slug: 'production' },
   { label: 'Drama', slug: 'drama' },
   { label: 'Choreography', slug: 'choreography' },
   { label: 'Spoken Word', slug: 'spoken-word' },
