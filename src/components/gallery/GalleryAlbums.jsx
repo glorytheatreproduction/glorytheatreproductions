@@ -3,7 +3,11 @@ import { useCms } from '../../context/CmsContext'
 import { countAlbumPhotos } from '../../lib/galleryImages'
 import { sortAlbumsByDate } from '../../lib/albumDates'
 
-export default function GalleryAlbums({ albums = [] }) {
+function albumMatchesFilter(album, filter) {
+  return filter === 'all' || album.category === filter
+}
+
+export default function GalleryAlbums({ albums = [], filter = 'all' }) {
   const { getCategoryLabel } = useCms()
   const sortedAlbums = sortAlbumsByDate(albums)
 
@@ -17,20 +21,18 @@ export default function GalleryAlbums({ albums = [] }) {
 
   return (
     <div className="space-y-16 md:space-y-20">
-      {sortedAlbums.map((album, index) => {
+      {sortedAlbums.map((album) => {
+        const matches = albumMatchesFilter(album, filter)
         const photoCount = countAlbumPhotos(album.images, album.cover)
 
         return (
           <article
             key={album.id}
             id={album.id}
-            className="scroll-mt-28"
+            className={matches ? 'scroll-mt-28 block' : 'hidden'}
+            aria-hidden={!matches}
           >
-            <header
-              className="max-w-3xl mb-8"
-              data-reveal
-              data-reveal-delay={String((index % 3) + 1)}
-            >
+            <header className="max-w-3xl mb-8">
               <div className="flex flex-wrap items-center gap-2">
                 <span
                   className="px-3 py-1 border border-border-light text-ink-muted text-[10px] font-mono uppercase tracking-wider"
@@ -66,7 +68,12 @@ export default function GalleryAlbums({ albums = [] }) {
               </p>
             </header>
 
-            <AlbumCollageGrid images={album.images} cover={album.cover} albumId={album.id} />
+            <AlbumCollageGrid
+              images={album.images}
+              cover={album.cover}
+              albumId={album.id}
+              active={matches}
+            />
           </article>
         )
       })}

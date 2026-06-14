@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import Layout from './components/layout/Layout'
+import ScrollToTop from './components/layout/ScrollToTop'
 import AdminLayout, { AdminGuard } from './components/admin/AdminLayout'
 import { AdminRoute, StaffRoute } from './components/admin/AdminRoutes'
 import Home from './pages/Home'
@@ -24,6 +25,7 @@ import AdminRegistrations from './pages/admin/AdminRegistrations'
 export default function App() {
   return (
     <BrowserRouter>
+      <ScrollToTop />
       <Routes>
         <Route element={<Layout />}>
           <Route index element={<Home />} />

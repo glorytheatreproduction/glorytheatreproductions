@@ -1,24 +1,39 @@
-import { useState } from 'react'
+import { useCallback, useMemo, useRef, useState } from 'react'
 import PageHero from '../components/ui/PageHero'
 import CategoryFilter from '../components/events/CategoryFilter'
 import GalleryAlbums from '../components/gallery/GalleryAlbums'
 import { useCms } from '../context/CmsContext'
-import { filterAlbums } from '../services/cms/gallery'
 import { useDocumentTitle } from '../hooks/useDocumentTitle'
 import { useScrollReveal } from '../hooks/useScrollReveal'
+
+function albumMatchesFilter(album, filter) {
+  return filter === 'all' || album.category === filter
+}
 
 export default function Gallery() {
   const { galleryAlbums, galleryCategories, pageHeroes, loading } = useCms()
   const hero = pageHeroes.gallery
+  const contentRef = useRef(null)
 
   useDocumentTitle(
     'Gallery — Glory Theatre Productions',
     'Browse photo albums from Glory Theatre Productions performances, choreography, spoken word, and behind-the-scenes moments.'
   )
-  useScrollReveal(loading)
 
   const [filter, setFilter] = useState('all')
-  const filtered = filterAlbums(galleryAlbums, filter)
+  useScrollReveal(loading, filter)
+
+  const matchCount = useMemo(
+    () => galleryAlbums.filter((album) => albumMatchesFilter(album, filter)).length,
+    [galleryAlbums, filter]
+  )
+
+  const handleFilterChange = useCallback((slug) => {
+    setFilter(slug)
+    requestAnimationFrame(() => {
+      contentRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    })
+  }, [])
 
   return (
     <>
@@ -40,13 +55,13 @@ export default function Gallery() {
           <CategoryFilter
             categories={galleryCategories}
             active={filter}
-            onChange={setFilter}
+            onChange={handleFilterChange}
             variant="light"
           />
         </div>
       </section>
 
-      <section className="bg-parchment py-16 md:py-24">
+      <section ref={contentRef} className="bg-parchment py-16 md:py-24 scroll-mt-28">
         <div className="max-w-7xl mx-auto px-6">
           {loading ? (
             <div className="py-20 text-center">
@@ -57,10 +72,10 @@ export default function Gallery() {
                 Loading gallery…
               </p>
             </div>
-          ) : filtered.length > 0 ? (
-            <GalleryAlbums albums={filtered} />
+          ) : matchCount > 0 ? (
+            <GalleryAlbums albums={galleryAlbums} filter={filter} />
           ) : (
-            <div className="py-20 text-center" data-reveal>
+            <div className="py-20 text-center">
               <p
                 className="font-heading italic text-ink-muted text-2xl"
                 style={{ fontFamily: 'var(--font-heading)' }}

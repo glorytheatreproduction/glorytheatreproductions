@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { useState } from 'react'
+import { memo, useEffect, useMemo, useState } from 'react'
 import Lightbox from './Lightbox'
 import GalleryImage from './GalleryImage'
 import {
@@ -10,7 +10,7 @@ import {
 } from '../../lib/galleryFacebookLayout'
 import { getAlbumVisibleImages } from '../../lib/galleryImages'
 
-function CollagePhoto({ image, className, onClick, priority = false }) {
+const CollagePhoto = memo(function CollagePhoto({ image, className, onClick, priority = false }) {
   return (
     <button
       type="button"
@@ -26,9 +26,9 @@ function CollagePhoto({ image, className, onClick, priority = false }) {
       />
     </button>
   )
-}
+})
 
-function MorePhotosTile({ hiddenCount, previewSrc, onClick }) {
+const MorePhotosTile = memo(function MorePhotosTile({ hiddenCount, previewSrc, onClick, priority = false }) {
   return (
     <button
       type="button"
@@ -39,7 +39,7 @@ function MorePhotosTile({ hiddenCount, previewSrc, onClick }) {
       <GalleryImage
         src={previewSrc}
         alt=""
-        priority
+        priority={priority}
         className="absolute inset-0 block h-full w-full object-cover object-center"
         draggable={false}
         aria-hidden
@@ -51,11 +51,15 @@ function MorePhotosTile({ hiddenCount, previewSrc, onClick }) {
       </span>
     </button>
   )
-}
+})
 
-export default function AlbumCollageGrid({ images = [], cover = '', albumId }) {
+function AlbumCollageGrid({ images = [], cover = '', albumId, active = true }) {
   const [lightboxIndex, setLightboxIndex] = useState(null)
-  const visibleImages = getAlbumVisibleImages(images, cover)
+  const visibleImages = useMemo(() => getAlbumVisibleImages(images, cover), [images, cover])
+
+  useEffect(() => {
+    if (!active) setLightboxIndex(null)
+  }, [active])
 
   if (!visibleImages.length) {
     return <p className="text-center text-sm text-ink-muted">No images in this album yet.</p>
@@ -70,6 +74,7 @@ export default function AlbumCollageGrid({ images = [], cover = '', albumId }) {
   const morePreviewSrc = visibleImages[FB_ALBUM_PREVIEW_COUNT]?.src
     || visibleImages[visibleImages.length - 1]?.src
     || visibleImages[0].src
+  const loadPriority = active
 
   return (
     <>
@@ -80,7 +85,7 @@ export default function AlbumCollageGrid({ images = [], cover = '', albumId }) {
           <CollagePhoto
             key={`${image.id || image.src}-${i}`}
             image={image}
-            priority={i === 0}
+            priority={loadPriority}
             className={tiles[i]?.className || 'col-span-1 row-span-1'}
             onClick={() => setLightboxIndex(Math.min(i, total - 1))}
           />
@@ -91,6 +96,7 @@ export default function AlbumCollageGrid({ images = [], cover = '', albumId }) {
             <MorePhotosTile
               hiddenCount={hiddenCount}
               previewSrc={morePreviewSrc}
+              priority={loadPriority}
               onClick={() => setLightboxIndex(FB_ALBUM_PREVIEW_COUNT)}
             />
           </div>
@@ -134,7 +140,7 @@ export default function AlbumCollageGrid({ images = [], cover = '', albumId }) {
       </div>
       )}
 
-      {lightboxIndex !== null && (
+      {lightboxIndex !== null && active ? (
         <Lightbox
           images={visibleImages}
           currentIndex={lightboxIndex}
@@ -142,7 +148,9 @@ export default function AlbumCollageGrid({ images = [], cover = '', albumId }) {
           onPrev={() => setLightboxIndex((i) => (i > 0 ? i - 1 : visibleImages.length - 1))}
           onNext={() => setLightboxIndex((i) => (i < visibleImages.length - 1 ? i + 1 : 0))}
         />
-      )}
+      ) : null}
     </>
   )
 }
+
+export default memo(AlbumCollageGrid)
