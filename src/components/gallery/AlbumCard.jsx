@@ -1,9 +1,10 @@
 import { Link } from 'react-router-dom'
 import { getCategoryLabel } from '../../data/gallery'
 import CmsImage from '../ui/CmsImage'
+import { countAlbumPhotos } from '../../lib/galleryImages'
 
 export default function AlbumCard({ album, index = 0 }) {
-  const photoCount = album.images.length
+  const photoCount = countAlbumPhotos(album.images, album.cover)
 
   return (
     <Link
@@ -17,6 +18,7 @@ export default function AlbumCard({ album, index = 0 }) {
           src={album.cover}
           alt={album.title}
           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+          loading="eager"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-void/80 via-void/20 to-transparent" />
         <div className="absolute bottom-0 left-0 right-0 p-6">

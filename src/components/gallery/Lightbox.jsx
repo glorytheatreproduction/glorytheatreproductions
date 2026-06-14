@@ -1,5 +1,6 @@
 import { useCallback, useEffect } from 'react'
 import { createPortal } from 'react-dom'
+import GalleryImage from './GalleryImage'
 
 export default function Lightbox({ images, currentIndex, onClose, onPrev, onNext }) {
   const current = images[currentIndex]
@@ -88,10 +89,11 @@ export default function Lightbox({ images, currentIndex, onClose, onPrev, onNext
         className="relative z-[1] max-h-[90vh] max-w-4xl px-12 text-center sm:px-16"
         onMouseDown={(e) => e.stopPropagation()}
       >
-        <img
-          key={current.src + currentIndex}
+        <GalleryImage
+          key={`${current.src}-${currentIndex}`}
           src={current.src}
-          alt={current.title}
+          alt={current.title || 'Album photo'}
+          priority
           className="max-h-[80vh] max-w-full object-contain"
         />
         {current.title ? (

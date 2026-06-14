@@ -1,5 +1,5 @@
 import { testimonials as defaultTestimonials } from '../data/blog.js'
-import { sanitizeImageUrl } from '../lib/cmsImage.js'
+import { resolveCmsImageUrl } from '../lib/cmsImage.js'
 
 export const CONTENT_KEYS = {
   homeHero: 'home.hero.v1',
@@ -99,7 +99,7 @@ export function mergeContent(defaults, remote) {
       merged[key] = mergeContent(defaults[key], value)
     } else {
       merged[key] = typeof value === 'string' && /image|cover|photo|src/i.test(key)
-        ? sanitizeImageUrl(value)
+        ? resolveCmsImageUrl(value)
         : value
     }
   }

@@ -1,5 +1,5 @@
 import { MEDIA_POSITIONS, parseVideoUrl } from '../../lib/videoEmbed'
-import { sanitizeImageUrl } from '../../lib/cmsImage'
+import { resolveCmsImageUrl } from '../../lib/cmsImage'
 import CmsImage from '../ui/CmsImage'
 
 function MediaFigure({ position, caption, children }) {
@@ -51,7 +51,7 @@ export default function BlogArticle({ content }) {
         }
 
         if (block.type === 'image') {
-          const imageSrc = sanitizeImageUrl(block.src)
+          const imageSrc = resolveCmsImageUrl(block.src)
           if (!imageSrc) return null
 
           return (

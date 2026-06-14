@@ -1,26 +1,27 @@
 import { Link } from 'react-router-dom'
 import { useState } from 'react'
 import Lightbox from './Lightbox'
+import GalleryImage from './GalleryImage'
 import {
   FB_ALBUM_PREVIEW_COUNT,
   facebookCollageLayout,
   facebookHiddenCount,
   facebookShowsMoreTile,
 } from '../../lib/galleryFacebookLayout'
-import { sanitizeImageUrl } from '../../lib/cmsImage'
+import { getAlbumVisibleImages } from '../../lib/galleryImages'
 
-function CollagePhoto({ image, className, onClick }) {
+function CollagePhoto({ image, className, onClick, priority = false }) {
   return (
     <button
       type="button"
       className={`group relative m-0 block min-h-0 h-full w-full overflow-hidden border-0 bg-void p-0 ${className}`}
       onClick={onClick}
     >
-      <img
+      <GalleryImage
         src={image.src}
         alt={image.title || 'Album photo'}
+        priority={priority}
         className="absolute inset-0 block h-full w-full object-cover object-center transition duration-200 group-hover:brightness-95"
-        loading="lazy"
         draggable={false}
       />
     </button>
@@ -35,11 +36,11 @@ function MorePhotosTile({ hiddenCount, previewSrc, onClick }) {
       onClick={onClick}
       aria-label={`View ${hiddenCount} more photos`}
     >
-      <img
+      <GalleryImage
         src={previewSrc}
         alt=""
+        priority
         className="absolute inset-0 block h-full w-full object-cover object-center"
-        loading="lazy"
         draggable={false}
         aria-hidden
       />
@@ -52,25 +53,9 @@ function MorePhotosTile({ hiddenCount, previewSrc, onClick }) {
   )
 }
 
-function buildVisibleImages(images, cover) {
-  const withSrc = (images || [])
-    .map((image) => ({ ...image, src: sanitizeImageUrl(image?.src) }))
-    .filter((image) => image.src)
-  if (withSrc.length) return withSrc
-  const coverSrc = sanitizeImageUrl(cover)
-  if (coverSrc) {
-    return [{ id: 'cover', src: coverSrc, title: 'Album cover' }]
-  }
-  return []
-}
-
-function imageForTile(index, visibleImages) {
-  return visibleImages[index] || visibleImages[index % visibleImages.length]
-}
-
 export default function AlbumCollageGrid({ images = [], cover = '', albumId }) {
   const [lightboxIndex, setLightboxIndex] = useState(null)
-  const visibleImages = buildVisibleImages(images, cover)
+  const visibleImages = getAlbumVisibleImages(images, cover)
 
   if (!visibleImages.length) {
     return <p className="text-center text-sm text-ink-muted">No images in this album yet.</p>
@@ -84,18 +69,18 @@ export default function AlbumCollageGrid({ images = [], cover = '', albumId }) {
   const { gridClass, tiles } = facebookCollageLayout(total)
   const morePreviewSrc = visibleImages[FB_ALBUM_PREVIEW_COUNT]?.src
     || visibleImages[visibleImages.length - 1]?.src
-    || cover?.trim()
     || visibleImages[0].src
 
   return (
     <>
       <div
-        className={`grid h-[clamp(13rem,42vw,28rem)] gap-0 overflow-hidden bg-void leading-[0] sm:h-[clamp(15rem,38vw,30rem)] md:h-[clamp(17rem,34vw,32rem)] ${gridClass}`}
+        className={`gallery-collage grid h-[clamp(13rem,42vw,28rem)] gap-0 overflow-hidden bg-void leading-[0] sm:h-[clamp(15rem,38vw,30rem)] md:h-[clamp(17rem,34vw,32rem)] ${gridClass}`}
       >
         {previewItems.map((image, i) => (
           <CollagePhoto
             key={`${image.id || image.src}-${i}`}
-            image={imageForTile(i, previewItems)}
+            image={image}
+            priority={i === 0}
             className={tiles[i]?.className || 'col-span-1 row-span-1'}
             onClick={() => setLightboxIndex(Math.min(i, total - 1))}
           />

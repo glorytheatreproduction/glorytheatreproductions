@@ -3,25 +3,41 @@ import SectionLabel from '../components/ui/SectionLabel'
 import AlbumCollageGrid from '../components/gallery/AlbumCollageGrid'
 import { useCms } from '../context/CmsContext'
 import { getAlbumById } from '../services/cms/gallery'
+import { countAlbumPhotos } from '../lib/galleryImages'
 import { useDocumentTitle } from '../hooks/useDocumentTitle'
 import { useScrollReveal } from '../hooks/useScrollReveal'
 
 export default function GalleryAlbum() {
   const { albumId } = useParams()
-  const { galleryAlbums, getCategoryLabel } = useCms()
+  const { galleryAlbums, getCategoryLabel, loading } = useCms()
   const album = getAlbumById(galleryAlbums, albumId)
 
   useDocumentTitle(
     album ? `${album.title} — Gallery` : 'Album Not Found',
     album?.description
   )
-  useScrollReveal()
+  useScrollReveal(loading, albumId)
+
+  if (loading) {
+    return (
+      <section className="bg-parchment py-32">
+        <div className="max-w-7xl mx-auto px-6 text-center">
+          <p
+            className="font-mono text-xs uppercase tracking-widest text-ink-muted"
+            style={{ fontFamily: 'var(--font-mono)' }}
+          >
+            Loading album…
+          </p>
+        </div>
+      </section>
+    )
+  }
 
   if (!album) {
     return <Navigate to="/gallery" replace />
   }
 
-  const photoCount = album.images.length
+  const photoCount = countAlbumPhotos(album.images, album.cover)
 
   return (
     <>

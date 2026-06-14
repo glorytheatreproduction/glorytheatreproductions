@@ -1,4 +1,5 @@
-import { sanitizeImageUrl } from './cmsImage'
+import { resolveCmsImageUrl } from './cmsImage'
+import { normalizeAlbumImages } from './galleryImages'
 
 export function mapEventRow(row) {
   if (!row) return null
@@ -15,7 +16,7 @@ export function mapEventRow(row) {
     dateLabel: row.date_label,
     time: row.time,
     venue: row.venue,
-    image: sanitizeImageUrl(row.image),
+    image: resolveCmsImageUrl(row.image),
     availability: row.availability,
     featured: row.featured,
     tags: row.tags || [],
@@ -59,19 +60,16 @@ export function mapEventToRow(event) {
 
 export function mapAlbumRow(row) {
   if (!row) return null
+  const images = normalizeAlbumImages(row.images)
+  const cover = resolveCmsImageUrl(row.cover) || images[0]?.src || ''
   return {
     id: row.id,
     title: row.title,
     description: row.description,
     category: row.category,
     date: row.date,
-    cover: sanitizeImageUrl(row.cover),
-    images: Array.isArray(row.images)
-      ? row.images.map((image) => ({
-          ...image,
-          src: sanitizeImageUrl(image?.src),
-        }))
-      : [],
+    cover,
+    images,
     published: row.published,
     sortOrder: row.sort_order,
   }
@@ -101,7 +99,7 @@ export function mapBlogRow(row) {
     categorySlug: row.category_slug,
     date: row.date,
     readTime: row.read_time,
-    image: sanitizeImageUrl(row.image),
+    image: resolveCmsImageUrl(row.image),
     author: row.author,
     role: row.role,
     featured: row.featured,

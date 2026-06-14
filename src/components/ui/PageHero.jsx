@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 import SectionLabel from './SectionLabel'
-import { sanitizeImageUrl } from '../../lib/cmsImage'
+import { resolveCmsImageUrl } from '../../lib/cmsImage'
 
 const titleSizes = {
   default: 'text-5xl md:text-7xl mb-4',
@@ -18,7 +18,7 @@ export default function PageHero({
   narrow = false,
 }) {
   const contentWidth = narrow ? 'max-w-4xl' : 'max-w-7xl'
-  const heroImage = sanitizeImageUrl(image)
+  const heroImage = resolveCmsImageUrl(image)
 
   return (
     <section className="section-dark relative bg-void min-h-[40vh] flex items-end">

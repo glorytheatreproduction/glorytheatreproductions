@@ -8,6 +8,8 @@ function envOrUndefined(value) {
 const supabaseUrl = envOrUndefined(import.meta.env.VITE_SUPABASE_URL)
 const supabaseAnonKey = envOrUndefined(import.meta.env.VITE_SUPABASE_ANON_KEY)
 
+export { supabaseUrl }
+
 export const supabaseIsConfigured = Boolean(supabaseUrl && supabaseAnonKey)
 
 export const supabase = supabaseIsConfigured

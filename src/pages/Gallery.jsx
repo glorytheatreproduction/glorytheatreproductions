@@ -8,14 +8,14 @@ import { useDocumentTitle } from '../hooks/useDocumentTitle'
 import { useScrollReveal } from '../hooks/useScrollReveal'
 
 export default function Gallery() {
-  const { galleryAlbums, galleryCategories, pageHeroes } = useCms()
+  const { galleryAlbums, galleryCategories, pageHeroes, loading } = useCms()
   const hero = pageHeroes.gallery
 
   useDocumentTitle(
     'Gallery — Glory Theatre Productions',
     'Browse photo albums from Glory Theatre Productions performances, choreography, spoken word, and behind-the-scenes moments.'
   )
-  useScrollReveal()
+  useScrollReveal(loading)
 
   const [filter, setFilter] = useState('all')
   const filtered = filterAlbums(galleryAlbums, filter)
@@ -48,8 +48,17 @@ export default function Gallery() {
 
       <section className="bg-parchment py-16 md:py-24">
         <div className="max-w-7xl mx-auto px-6">
-          {filtered.length > 0 ? (
-            <GalleryAlbums albums={filtered} key={filter} />
+          {loading ? (
+            <div className="py-20 text-center">
+              <p
+                className="font-mono text-xs uppercase tracking-widest text-ink-muted"
+                style={{ fontFamily: 'var(--font-mono)' }}
+              >
+                Loading gallery…
+              </p>
+            </div>
+          ) : filtered.length > 0 ? (
+            <GalleryAlbums albums={filtered} />
           ) : (
             <div className="py-20 text-center" data-reveal>
               <p

@@ -1,4 +1,4 @@
-import { sanitizeImageUrl } from '../../lib/cmsImage'
+import { resolveCmsImageUrl } from '../../lib/cmsImage'
 
 export default function CmsImage({
   src,
@@ -7,7 +7,7 @@ export default function CmsImage({
   placeholderClassName = 'bg-gradient-to-br from-stage via-void to-burgundy/40',
   ...props
 }) {
-  const url = sanitizeImageUrl(src)
+  const url = resolveCmsImageUrl(src)
 
   if (!url) {
     return (

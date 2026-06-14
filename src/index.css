@@ -230,6 +230,12 @@ a {
   transition: opacity 0.7s ease, transform 0.7s ease;
 }
 
+[data-reveal] .gallery-collage,
+[data-reveal] .gallery-collage img {
+  opacity: 1;
+  transform: none;
+}
+
 [data-reveal].is-revealed {
   opacity: 1;
   transform: translateY(0);

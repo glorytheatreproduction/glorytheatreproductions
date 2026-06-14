@@ -1,5 +1,6 @@
 import AlbumCollageGrid from './AlbumCollageGrid'
 import { useCms } from '../../context/CmsContext'
+import { countAlbumPhotos } from '../../lib/galleryImages'
 import { sortAlbumsByDate } from '../../lib/albumDates'
 
 export default function GalleryAlbums({ albums = [] }) {
@@ -17,17 +18,19 @@ export default function GalleryAlbums({ albums = [] }) {
   return (
     <div className="space-y-16 md:space-y-20">
       {sortedAlbums.map((album, index) => {
-        const photoCount = album.images.length
+        const photoCount = countAlbumPhotos(album.images, album.cover)
 
         return (
           <article
             key={album.id}
             id={album.id}
-            data-reveal
-            data-reveal-delay={String((index % 3) + 1)}
             className="scroll-mt-28"
           >
-            <header className="max-w-3xl mb-8">
+            <header
+              className="max-w-3xl mb-8"
+              data-reveal
+              data-reveal-delay={String((index % 3) + 1)}
+            >
               <div className="flex flex-wrap items-center gap-2">
                 <span
                   className="px-3 py-1 border border-border-light text-ink-muted text-[10px] font-mono uppercase tracking-wider"
