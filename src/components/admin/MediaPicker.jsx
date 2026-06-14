@@ -1,19 +1,36 @@
 import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { listMediaAssets, uploadMediaAsset } from '../../services/cms/media'
-import { ADMIN_BTN, ADMIN_BTN_OUTLINE, ADMIN_PANEL } from './adminStyles'
+import { ADMIN_BTN_OUTLINE, ADMIN_PANEL } from './adminStyles'
 
-export default function MediaPicker({ folder = 'general', onSelect, onClose }) {
+const MEDIA_FOLDERS = ['general', 'cms', 'events', 'gallery', 'blog']
+
+function isImageAsset(asset) {
+  return !asset.mimeType || asset.mimeType.startsWith('image/')
+}
+
+export default function MediaPicker({
+  folder = 'general',
+  browseAll = false,
+  onSelect,
+  onClose,
+}) {
+  const [activeFolder, setActiveFolder] = useState(browseAll ? 'all' : folder)
   const [assets, setAssets] = useState([])
   const [loading, setLoading] = useState(true)
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState('')
 
+  const uploadFolder = browseAll && activeFolder !== 'all' ? activeFolder : (folder || 'general')
+
   const load = async () => {
     setLoading(true)
     setError('')
     try {
-      setAssets(await listMediaAssets(folder))
+      const list = browseAll && activeFolder === 'all'
+        ? await listMediaAssets('')
+        : await listMediaAssets(browseAll ? activeFolder : folder)
+      setAssets(list.filter(isImageAsset))
     } catch (err) {
       setError(err.message || 'Failed to load media')
     } finally {
@@ -23,7 +40,7 @@ export default function MediaPicker({ folder = 'general', onSelect, onClose }) {
 
   useEffect(() => {
     load()
-  }, [folder])
+  }, [folder, browseAll, activeFolder])
 
   const onUpload = async (e) => {
     const file = e.target.files?.[0]
@@ -31,7 +48,8 @@ export default function MediaPicker({ folder = 'general', onSelect, onClose }) {
     setUploading(true)
     setError('')
     try {
-      await uploadMediaAsset(file, { folder })
+      const targetFolder = uploadFolder
+      await uploadMediaAsset(file, { folder: targetFolder })
       await load()
     } catch (err) {
       setError(err.message || 'Upload failed')
@@ -55,6 +73,28 @@ export default function MediaPicker({ folder = 'general', onSelect, onClose }) {
           </div>
         </div>
 
+        {browseAll ? (
+          <div className="mb-4 flex flex-wrap gap-2">
+            <button
+              type="button"
+              className={`rounded px-3 py-1.5 text-sm capitalize transition ${activeFolder === 'all' ? 'bg-gold text-void' : 'bg-surface text-ink-muted hover:text-ink'}`}
+              onClick={() => setActiveFolder('all')}
+            >
+              All
+            </button>
+            {MEDIA_FOLDERS.map((name) => (
+              <button
+                key={name}
+                type="button"
+                className={`rounded px-3 py-1.5 text-sm capitalize transition ${activeFolder === name ? 'bg-gold text-void' : 'bg-surface text-ink-muted hover:text-ink'}`}
+                onClick={() => setActiveFolder(name)}
+              >
+                {name}
+              </button>
+            ))}
+          </div>
+        ) : null}
+
         {error ? <p className="mb-4 text-sm text-burgundy">{error}</p> : null}
         {loading ? <p className="text-sm text-ink-muted">Loading…</p> : null}
 
@@ -67,7 +107,14 @@ export default function MediaPicker({ folder = 'general', onSelect, onClose }) {
               onClick={() => onSelect(asset.publicUrl)}
             >
               <img src={asset.publicUrl} alt={asset.alt || asset.title || ''} className="aspect-square w-full object-cover" />
-              <span className="block truncate px-2 py-1 text-xs text-ink-muted">{asset.title || asset.path}</span>
+              <span className="block truncate px-2 py-1 text-xs text-ink-muted">
+                {asset.title || asset.path}
+              </span>
+              {browseAll && asset.folder ? (
+                <span className="block truncate px-2 pb-1 text-[10px] uppercase tracking-wider text-ink-muted/70">
+                  {asset.folder}
+                </span>
+              ) : null}
             </button>
           ))}
         </div>

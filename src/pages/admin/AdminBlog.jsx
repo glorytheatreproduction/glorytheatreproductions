@@ -415,7 +415,13 @@ export default function AdminBlog() {
             <Field label="Author" value={form.author} onChange={(v) => setForm({ ...form, author: v })} />
             <Field label="Role" value={form.role} onChange={(v) => setForm({ ...form, role: v })} />
           </div>
-          <ImageField label="Cover image" value={form.image} onChange={(v) => setForm({ ...form, image: v })} folder="blog" />
+          <ImageField
+            label="Cover image"
+            value={form.image}
+            onChange={(v) => setForm({ ...form, image: v })}
+            folder="blog"
+            browseAllMedia
+          />
 
           <div className="space-y-4 rounded border border-border-light p-4">
             <div className="flex flex-wrap items-center justify-between gap-3">
@@ -479,6 +485,7 @@ export default function AdminBlog() {
                       value={block.src}
                       onChange={(v) => updateBlock(index, 'src', v)}
                       folder="blog"
+                      browseAllMedia
                     />
                     <label className={`${ADMIN_BTN_OUTLINE} inline-block cursor-pointer`}>
                       {uploadingBlock === index ? 'Uploading…' : 'Upload image file'}
