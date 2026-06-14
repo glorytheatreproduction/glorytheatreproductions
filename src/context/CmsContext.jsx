@@ -12,7 +12,6 @@ import {
 } from '../config/contentDefaults'
 import { events as defaultEvents, SEASON as defaultSeason, CATEGORIES } from '../data/events'
 import { galleryAlbums as defaultAlbums, GALLERY_CATEGORIES, getCategoryLabel } from '../data/gallery'
-import { sortAlbumsByDate } from '../lib/albumDates'
 import { blogPosts as defaultPosts, BLOG_CATEGORIES, testimonials as defaultTestimonials } from '../data/blog'
 import { supabaseIsConfigured } from '../lib/supabaseClient'
 import { fetchPublishedPosts } from '../services/cms/blog'
@@ -26,7 +25,7 @@ export function CmsProvider({ children }) {
   const [loading, setLoading] = useState(supabaseIsConfigured)
   const [events, setEvents] = useState(defaultEvents)
   const [season, setSeason] = useState(defaultSeason)
-  const [galleryAlbums, setGalleryAlbums] = useState(sortAlbumsByDate(defaultAlbums))
+  const [galleryAlbums, setGalleryAlbums] = useState(defaultAlbums)
   const [blogPosts, setBlogPosts] = useState(defaultPosts)
   const [testimonials, setTestimonials] = useState(defaultTestimonials)
   const [homeHero, setHomeHero] = useState(homeHeroDefaults)
@@ -58,7 +57,7 @@ export function CmsProvider({ children }) {
 
       if (albumsResult.status === 'fulfilled' && albumsResult.value !== null) {
         const remoteAlbums = albumsResult.value
-        setGalleryAlbums(remoteAlbums.length > 0 ? remoteAlbums : sortAlbumsByDate(defaultAlbums))
+        setGalleryAlbums(remoteAlbums.length > 0 ? remoteAlbums : defaultAlbums)
       } else if (albumsResult.status === 'rejected') {
         console.error('[CMS] failed to load gallery, using defaults', albumsResult.reason)
       }

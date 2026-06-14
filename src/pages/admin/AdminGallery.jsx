@@ -172,8 +172,7 @@ export default function AdminGallery() {
         <div className={`${ADMIN_PANEL} space-y-4`}>
           <Field label="Title" value={form.title} onChange={(v) => setForm({ ...form, title: v })} />
           <TextArea label="Description" value={form.description} onChange={(v) => setForm({ ...form, description: v })} />
-          <Field label="Date tag" value={form.date} onChange={(v) => setForm({ ...form, date: v })} placeholder="e.g. March 2026 or Season 25–26" />
-          <p className="text-xs text-ink-muted -mt-2">Used to sort albums on the gallery page (newest first).</p>
+          <Field label="Date label" value={form.date} onChange={(v) => setForm({ ...form, date: v })} />
           <div>
             <label className={ADMIN_LABEL}>Category</label>
             <select className={ADMIN_INPUT} value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })}>
@@ -182,7 +181,7 @@ export default function AdminGallery() {
               ))}
             </select>
           </div>
-          <Field label="Manual sort order" value={form.sortOrder} onChange={(v) => setForm({ ...form, sortOrder: Number(v) || 0 })} type="number" />
+          <Field label="Sort order" value={form.sortOrder} onChange={(v) => setForm({ ...form, sortOrder: Number(v) || 0 })} type="number" />
           <ImageField label="Cover image" value={form.cover} onChange={(v) => setForm({ ...form, cover: v })} folder="gallery" />
 
           <div className="space-y-4 rounded border border-border-light p-4">
