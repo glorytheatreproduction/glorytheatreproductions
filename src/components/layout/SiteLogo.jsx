@@ -1,5 +1,7 @@
 const LOGO = {
+  /** Light/cream text — for dark backgrounds (footer, hero nav) */
   onDark: '/images/logo/glory-theatre-logo-dark.png',
+  /** Dark text, transparent — for light backgrounds (CMS, scrolled nav) */
   onLight: '/images/logo/glory-theatre-logo-light.png',
 }
 
@@ -11,9 +13,9 @@ export default function SiteLogo({ variant = 'on-light', className = '' }) {
     <img
       src={src}
       alt="Glory Theatre Productions"
-      className={`h-9 w-auto max-w-[min(240px,62vw)] object-contain object-left md:h-10 md:max-w-[280px] ${className}`}
-      width={280}
-      height={40}
+      className={`h-10 w-auto max-w-[min(300px,72vw)] object-contain object-left md:h-11 md:max-w-[340px] ${className}`}
+      width={340}
+      height={128}
       decoding="async"
     />
   )

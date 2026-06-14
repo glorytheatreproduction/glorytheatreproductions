@@ -1,6 +1,7 @@
 import { Link, Navigate, Outlet, useLocation } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { ROLE_LABELS, getMemberLoginLabel } from '../../services/cms/members'
+import SiteLogo from '../layout/SiteLogo'
 
 const NAV_LINKS = [
   { to: '/admin', label: 'Overview', end: true, staffOnly: true },
@@ -18,9 +19,16 @@ function roleLabel(role) {
   return ROLE_LABELS[role] || role || 'Member'
 }
 
+function cmsTitle({ isCheckInStaff, isStaff, isBlogWriter, isBlogAdmin }) {
+  if (isCheckInStaff && !isStaff && !isBlogWriter && !isBlogAdmin) return 'Check-In'
+  if (isBlogAdmin && !isStaff) return 'Blog'
+  return 'CMS'
+}
+
 export default function AdminLayout() {
   const { signOut, profile, isStaff, isAdmin, isBlogAdmin, isBlogWriter, isCheckInStaff } = useAuth()
   const { pathname } = useLocation()
+  const panelLabel = cmsTitle({ isCheckInStaff, isStaff, isBlogWriter, isBlogAdmin })
 
   const links = NAV_LINKS.filter((link) => {
     if (link.adminOnly) return isAdmin
@@ -31,19 +39,15 @@ export default function AdminLayout() {
   })
 
   return (
-    <div className="min-h-screen bg-parchment text-ink">
+    <div className="flex min-h-screen flex-col bg-parchment text-ink">
       <header className="border-b border-border-light bg-paper">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-6 py-4">
           <div>
-            <p className="font-display text-lg text-ink">
-              {isCheckInStaff && !isStaff && !isBlogWriter && !isBlogAdmin
-                ? 'Glory Theatre Check-In'
-                : isBlogAdmin && !isStaff
-                  ? 'Glory Theatre Blog'
-                  : 'Glory Theatre CMS'}
-            </p>
-            <p className="font-mono text-[10px] uppercase tracking-widest text-ink-muted">
-              {getMemberLoginLabel(profile)} · {roleLabel(profile?.role)}
+            <Link to="/admin" className="inline-block">
+              <SiteLogo variant="on-light" />
+            </Link>
+            <p className="mt-2 font-mono text-[10px] uppercase tracking-widest text-ink-muted">
+              {panelLabel} · {getMemberLoginLabel(profile)} · {roleLabel(profile?.role)}
             </p>
           </div>
           <div className="flex items-center gap-3">
@@ -55,7 +59,7 @@ export default function AdminLayout() {
         </div>
       </header>
 
-      <div className="mx-auto grid max-w-7xl gap-8 px-6 py-8 lg:grid-cols-[220px_1fr]">
+      <div className="mx-auto grid w-full max-w-7xl flex-1 gap-8 px-6 py-8 lg:grid-cols-[220px_1fr]">
         <nav className="flex flex-wrap gap-2 lg:flex-col lg:gap-1">
           {links.map(({ to, label, end }) => {
             const active = end ? pathname === to : pathname === to || pathname.startsWith(`${to}/`)
@@ -77,6 +81,17 @@ export default function AdminLayout() {
           <Outlet />
         </main>
       </div>
+
+      <footer className="border-t border-border-light bg-stage">
+        <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 px-6 py-5">
+          <Link to="/" className="inline-block">
+            <SiteLogo variant="on-dark" className="h-8 md:h-9" />
+          </Link>
+          <p className="font-mono text-[10px] uppercase tracking-widest text-cream/60">
+            Glory Theatre staff portal
+          </p>
+        </div>
+      </footer>
     </div>
   )
 }
