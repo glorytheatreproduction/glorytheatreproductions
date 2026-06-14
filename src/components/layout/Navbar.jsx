@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Link, NavLink, useLocation } from 'react-router-dom'
+import SiteLogo from './SiteLogo'
 
 const navLinks = [
   { to: '/events', label: 'Events' },
@@ -48,19 +49,8 @@ export default function Navbar() {
         className={`site-nav fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${navClass}`}
       >
         <div className="max-w-7xl mx-auto px-6 py-5 flex items-center justify-between">
-          <Link to="/" className="group" onClick={() => setMenuOpen(false)}>
-            <span
-              className="block font-display text-lg font-bold text-gold tracking-wide leading-tight"
-              style={{ fontFamily: 'var(--font-display)' }}
-            >
-              Glory Theatre
-            </span>
-            <span
-              className="site-nav-subtitle block font-mono text-[9px] uppercase tracking-[0.3em] transition-colors duration-300"
-              style={{ fontFamily: 'var(--font-mono)' }}
-            >
-              Productions
-            </span>
+          <Link to="/" className="inline-flex items-center" onClick={() => setMenuOpen(false)}>
+            <SiteLogo variant={filled ? 'on-light' : 'on-dark'} />
           </Link>
 
           <div className="hidden md:flex items-center gap-10">

@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { SOCIAL_PLATFORMS } from '../../config/contentDefaults'
 import { useCms } from '../../context/CmsContext'
+import SiteLogo from './SiteLogo'
 import MarqueeBand from './MarqueeBand'
 
 const quickLinks = [
@@ -41,21 +42,10 @@ export default function Footer() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 mb-10">
             {/* Brand */}
             <div>
-              <Link to="/">
-                <span
-                  className="block font-display text-xl font-bold text-gold leading-tight"
-                  style={{ fontFamily: 'var(--font-display)' }}
-                >
-                  Glory Theatre
-                </span>
-                <span
-                  className="block font-mono text-[9px] uppercase tracking-[0.3em] text-gold-light mb-1"
-                  style={{ fontFamily: 'var(--font-mono)' }}
-                >
-                  Productions
-                </span>
+              <Link to="/" className="inline-block">
+                <SiteLogo variant="on-dark" />
               </Link>
-              <p className="text-cream/85 text-sm font-body leading-tight">
+              <p className="mt-3 text-cream/85 text-sm font-body leading-tight">
                 Bringing stories to life on stage.
               </p>
             </div>
