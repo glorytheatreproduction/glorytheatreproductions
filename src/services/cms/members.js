@@ -1,4 +1,5 @@
 import { getSupabase } from '../../lib/supabaseClient'
+import { roleUsesUsername } from '../../lib/staffAuth'
 
 export async function fetchMembers() {
   const { data, error } = await getSupabase()
@@ -22,9 +23,16 @@ export async function updateMember(userId, { role, status, fullName }) {
   if (error) throw error
 }
 
-export async function inviteMember({ email, password, fullName, role = 'blog_writer' }) {
+export async function inviteMember({ email, username, password, fullName, role = 'blog_writer' }) {
   const { data: { session } } = await getSupabase().auth.getSession()
   if (!session?.access_token) throw new Error('You must be signed in as an admin')
+
+  const payload = { password, fullName, role }
+  if (roleUsesUsername(role)) {
+    payload.username = username
+  } else {
+    payload.email = email
+  }
 
   const res = await fetch('/api/invite-member', {
     method: 'POST',
@@ -32,13 +40,15 @@ export async function inviteMember({ email, password, fullName, role = 'blog_wri
       'Content-Type': 'application/json',
       Authorization: `Bearer ${session.access_token}`,
     },
-    body: JSON.stringify({ email, password, fullName, role }),
+    body: JSON.stringify(payload),
   })
 
   const data = await res.json().catch(() => ({}))
   if (!res.ok) throw new Error(data.error || 'Invite failed')
   return data
 }
+
+export { getMemberLoginLabel, roleUsesUsername } from '../../lib/staffAuth'
 
 export const ROLE_LABELS = {
   super_admin: 'Super Admin',

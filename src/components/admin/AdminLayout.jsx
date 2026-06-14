@@ -1,6 +1,6 @@
 import { Link, Navigate, Outlet, useLocation } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
-import { ROLE_LABELS } from '../../services/cms/members'
+import { ROLE_LABELS, getMemberLoginLabel } from '../../services/cms/members'
 
 const NAV_LINKS = [
   { to: '/admin', label: 'Overview', end: true, staffOnly: true },
@@ -38,7 +38,7 @@ export default function AdminLayout() {
               {isCheckInStaff && !isStaff && !isBlogWriter ? 'Glory Theatre Check-In' : 'Glory Theatre CMS'}
             </p>
             <p className="font-mono text-[10px] uppercase tracking-widest text-ink-muted">
-              {profile?.email || 'Member'} · {roleLabel(profile?.role)}
+              {getMemberLoginLabel(profile)} · {roleLabel(profile?.role)}
             </p>
           </div>
           <div className="flex items-center gap-3">

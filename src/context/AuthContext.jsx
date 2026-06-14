@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import { getSupabase, supabase, supabaseIsConfigured } from '../lib/supabaseClient'
+import { resolveLoginEmail } from '../lib/staffAuth'
 
 const AuthContext = createContext(null)
 
@@ -46,7 +47,8 @@ export function AuthProvider({ children }) {
     return () => sub.subscription.unsubscribe()
   }, [loadProfile])
 
-  const signIn = useCallback(async (email, password) => {
+  const signIn = useCallback(async (identifier, password) => {
+    const email = resolveLoginEmail(identifier)
     const { error } = await getSupabase().auth.signInWithPassword({ email, password })
     if (error) throw error
   }, [])

@@ -8,7 +8,9 @@ import {
 import {
   ROLE_LABELS,
   fetchMembers,
+  getMemberLoginLabel,
   inviteMember,
+  roleUsesUsername,
   updateMember,
 } from '../../services/cms/members'
 
@@ -36,9 +38,12 @@ export default function AdminMembers() {
   const [invite, setInvite] = useState({
     fullName: '',
     email: '',
+    username: '',
     password: '',
     role: 'blog_writer',
   })
+
+  const usesUsername = roleUsesUsername(invite.role)
 
   const load = async () => {
     setLoading(true)
@@ -59,7 +64,7 @@ export default function AdminMembers() {
     setStatus('')
     try {
       await inviteMember(invite)
-      setInvite({ fullName: '', email: '', password: '', role: 'blog_writer' })
+      setInvite({ fullName: '', email: '', username: '', password: '', role: 'blog_writer' })
       await load()
       setStatus('Member invited successfully.')
     } catch (err) {
@@ -85,7 +90,7 @@ export default function AdminMembers() {
       <div>
         <h1 className="font-display text-3xl text-ink">Members</h1>
         <p className="mt-2 text-sm text-ink-muted">
-          Sign up blog writers and manage who can access the CMS.
+          Blog writers and ticket scanners sign in with a username. Editors and admins use email.
         </p>
       </div>
 
@@ -95,14 +100,24 @@ export default function AdminMembers() {
         <h2 className="font-display text-xl text-ink">Invite member</h2>
         <form className="grid gap-4 md:grid-cols-2" onSubmit={onInvite}>
           <Field label="Full name" value={invite.fullName} onChange={(v) => setInvite({ ...invite, fullName: v })} />
-          <Field label="Email" value={invite.email} onChange={(v) => setInvite({ ...invite, email: v })} type="email" required />
+          {usesUsername ? (
+            <Field
+              label="Username"
+              value={invite.username}
+              onChange={(v) => setInvite({ ...invite, username: v })}
+              placeholder="e.g. jane.writer"
+              required
+            />
+          ) : (
+            <Field label="Email" value={invite.email} onChange={(v) => setInvite({ ...invite, email: v })} type="email" required />
+          )}
           <Field label="Temporary password" value={invite.password} onChange={(v) => setInvite({ ...invite, password: v })} type="password" required />
           <div>
             <label className={ADMIN_LABEL}>Role</label>
             <select
               className={ADMIN_INPUT}
               value={invite.role}
-              onChange={(e) => setInvite({ ...invite, role: e.target.value })}
+              onChange={(e) => setInvite({ ...invite, role: e.target.value, email: '', username: '' })}
             >
               {INVITE_ROLES.map((role) => (
                 <option key={role.value} value={role.value}>{role.label}</option>
@@ -125,7 +140,11 @@ export default function AdminMembers() {
             <div key={member.user_id} className="grid gap-3 rounded border border-border-light p-4 md:grid-cols-[1.2fr_1fr_1fr_auto] md:items-end">
               <div>
                 <p className="font-medium text-ink">{member.full_name || 'Unnamed member'}</p>
-                <p className="text-sm text-ink-muted">{member.email}</p>
+                <p className="text-sm text-ink-muted">
+                  {roleUsesUsername(member.role)
+                    ? `@${getMemberLoginLabel(member)}`
+                    : member.email}
+                </p>
               </div>
               <div>
                 <label className={ADMIN_LABEL}>Role</label>
@@ -159,7 +178,7 @@ export default function AdminMembers() {
   )
 }
 
-function Field({ label, value, onChange, type = 'text', required = false }) {
+function Field({ label, value, onChange, type = 'text', required = false, placeholder }) {
   return (
     <div>
       <label className={ADMIN_LABEL}>{label}</label>
@@ -169,6 +188,7 @@ function Field({ label, value, onChange, type = 'text', required = false }) {
         value={value}
         onChange={(e) => onChange(e.target.value)}
         required={required}
+        placeholder={placeholder}
       />
     </div>
   )

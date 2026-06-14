@@ -1,4 +1,10 @@
 import { createClient } from '@supabase/supabase-js'
+import {
+  isValidUsername,
+  normalizeUsername,
+  roleUsesUsername,
+  usernameToAuthEmail,
+} from './lib/staff-auth.cjs'
 
 const ALLOWED_ROLES = new Set(['blog_writer', 'check_in', 'editor', 'viewer'])
 
@@ -74,24 +80,55 @@ export default async function handler(req, res) {
     }
   }
 
-  const email = body.email?.trim().toLowerCase()
   const password = body.password
   const fullName = body.fullName?.trim() || ''
   const role = body.role || 'blog_writer'
 
-  if (!email || !password) {
-    return json(res, 400, { headers, data: { error: 'Email and password are required' } })
+  if (!password) {
+    return json(res, 400, { headers, data: { error: 'Password is required' } })
   }
 
   if (!ALLOWED_ROLES.has(role)) {
     return json(res, 400, { headers, data: { error: 'Invalid role for invite' } })
   }
 
+  let email
+  let username = null
+
+  if (roleUsesUsername(role)) {
+    username = normalizeUsername(body.username)
+    if (!isValidUsername(username)) {
+      return json(res, 400, {
+        headers,
+        data: {
+          error: 'Username must be 3–32 characters and use only letters, numbers, dots, underscores, or hyphens',
+        },
+      })
+    }
+
+    const { data: existingUsername } = await adminClient
+      .from('profiles')
+      .select('user_id')
+      .eq('username', username)
+      .maybeSingle()
+
+    if (existingUsername) {
+      return json(res, 400, { headers, data: { error: 'Username is already taken' } })
+    }
+
+    email = usernameToAuthEmail(username)
+  } else {
+    email = body.email?.trim().toLowerCase()
+    if (!email) {
+      return json(res, 400, { headers, data: { error: 'Email is required for this role' } })
+    }
+  }
+
   const { data: created, error: createError } = await adminClient.auth.admin.createUser({
     email,
     password,
     email_confirm: true,
-    user_metadata: { full_name: fullName },
+    user_metadata: { full_name: fullName, username: username || undefined },
   })
 
   let userId = created?.user?.id
@@ -117,6 +154,7 @@ export default async function handler(req, res) {
   const { error: profileError } = await adminClient.from('profiles').upsert({
     user_id: userId,
     email,
+    username,
     full_name: fullName,
     role,
     status: 'active',
@@ -131,9 +169,14 @@ export default async function handler(req, res) {
     headers,
     data: {
       success: true,
-      email,
+      email: username ? null : email,
+      username,
       role,
-      message: role === 'blog_writer' ? 'Blog writer account ready' : 'Member account ready',
+      message: role === 'blog_writer'
+        ? 'Blog writer account ready'
+        : role === 'check_in'
+          ? 'Ticket scanner account ready'
+          : 'Member account ready',
     },
   })
 }
