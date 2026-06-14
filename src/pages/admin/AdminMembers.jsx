@@ -17,6 +17,7 @@ import {
 const INVITE_ROLES = [
   { value: 'check_in', label: 'Ticket Scanner (check-in only)' },
   { value: 'blog_writer', label: 'Blog Writer' },
+  { value: 'blog_admin', label: 'Blog Admin (edit, approve & publish)' },
   { value: 'editor', label: 'Editor (full CMS)' },
   { value: 'viewer', label: 'Viewer (no CMS access)' },
 ]
@@ -24,6 +25,7 @@ const INVITE_ROLES = [
 const EDIT_ROLES = [
   { value: 'check_in', label: 'Ticket Scanner' },
   { value: 'blog_writer', label: 'Blog Writer' },
+  { value: 'blog_admin', label: 'Blog Admin' },
   { value: 'editor', label: 'Editor' },
   { value: 'admin', label: 'Admin' },
   { value: 'viewer', label: 'Viewer' },
@@ -90,7 +92,7 @@ export default function AdminMembers() {
       <div>
         <h1 className="font-display text-3xl text-ink">Members</h1>
         <p className="mt-2 text-sm text-ink-muted">
-          Blog writers and ticket scanners sign in with a username. Editors and admins use email.
+          Blog writers and ticket scanners sign in with a username. Blog admins, editors, and admins use email.
         </p>
       </div>
 

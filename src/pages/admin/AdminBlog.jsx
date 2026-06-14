@@ -10,7 +10,13 @@ import {
   slugify,
 } from '../../components/admin/adminStyles'
 import { BLOG_CATEGORIES } from '../../data/blog'
-import { deletePost, fetchAllPosts, upsertPost } from '../../services/cms/blog'
+import {
+  REVIEW_STATUS_LABELS,
+  deletePost,
+  fetchAllPosts,
+  reviewStatusTone,
+  upsertPost,
+} from '../../services/cms/blog'
 import { uploadMediaAsset, uploadMediaAssets } from '../../services/cms/media'
 import { useAuth } from '../../context/AuthContext'
 
@@ -42,7 +48,8 @@ const emptyPost = () => ({
   role: '',
   featured: false,
   content: [],
-  published: true,
+  published: false,
+  reviewStatus: 'draft',
   sortOrder: 0,
 })
 
@@ -124,7 +131,8 @@ function MediaPositionSelect({ value, onChange }) {
 }
 
 export default function AdminBlog() {
-  const { profile } = useAuth()
+  const { profile, canModerateBlog } = useAuth()
+  const writerOnly = !canModerateBlog
   const [items, setItems] = useState([])
   const [selected, setSelected] = useState(null)
   const [form, setForm] = useState(emptyPost())
@@ -255,26 +263,51 @@ export default function AdminBlog() {
     }
   }
 
-  const save = async () => {
+  const buildPayload = () => {
     const id = form.id || slugify(form.title)
     if (!id || !form.title) {
-      setStatus('Title is required.')
-      return
+      throw new Error('Title is required.')
     }
     const content = blocks.map(serializeBlock).filter(isBlockFilled)
     if (!content.length) {
-      setStatus('Add at least one content section.')
-      return
+      throw new Error('Add at least one content section.')
     }
+    return { ...form, id, content }
+  }
+
+  const persistPost = async (patch, successMessage) => {
     try {
-      await upsertPost({ ...form, id, content })
+      const payload = { ...buildPayload(), ...patch }
+      await upsertPost(payload)
       await load()
-      select({ ...form, id, content })
-      setStatus('Post saved.')
+      select(payload)
+      setStatus(successMessage)
     } catch (err) {
       setStatus(err.message)
     }
   }
+
+  const saveDraft = () => persistPost(
+    writerOnly
+      ? { published: false, reviewStatus: 'draft' }
+      : { published: form.published === true, reviewStatus: form.published ? 'approved' : (form.reviewStatus || 'draft') },
+    writerOnly ? 'Draft saved.' : 'Post saved.'
+  )
+
+  const submitForReview = () => persistPost(
+    { published: false, reviewStatus: 'pending' },
+    'Submitted for admin review. You will be notified when it is approved.'
+  )
+
+  const approvePost = () => persistPost(
+    { published: true, reviewStatus: 'approved' },
+    'Post approved and published.'
+  )
+
+  const requestChanges = () => persistPost(
+    { published: false, reviewStatus: 'rejected' },
+    'Sent back to the writer for changes.'
+  )
 
   const remove = async () => {
     if (!form.id || !window.confirm(`Delete "${form.title}"?`)) return
@@ -288,10 +321,26 @@ export default function AdminBlog() {
     }
   }
 
+  const pendingCount = items.filter((p) => p.reviewStatus === 'pending').length
+  const reviewStatus = form.reviewStatus || 'draft'
+
+  const sortedItems = canModerateBlog
+    ? [...items].sort((a, b) => {
+        const order = { pending: 0, rejected: 1, draft: 2, approved: 3 }
+        const diff = (order[a.reviewStatus] ?? 9) - (order[b.reviewStatus] ?? 9)
+        return diff !== 0 ? diff : (a.sortOrder ?? 0) - (b.sortOrder ?? 0)
+      })
+    : items
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between gap-4">
-        <h1 className="font-display text-3xl text-ink">Blog</h1>
+        <div>
+          <h1 className="font-display text-3xl text-ink">Blog</h1>
+          {canModerateBlog && pendingCount > 0 ? (
+            <p className="mt-1 text-sm text-gold-muted">{pendingCount} post{pendingCount === 1 ? '' : 's'} awaiting review</p>
+          ) : null}
+        </div>
         <button type="button" className={ADMIN_BTN_OUTLINE} onClick={() => select(null)}>New post</button>
       </div>
       {status ? <p className="text-sm text-ink-muted">{status}</p> : null}
@@ -299,19 +348,45 @@ export default function AdminBlog() {
       <div className="grid gap-6 lg:grid-cols-[260px_1fr]">
         <div className={`${ADMIN_PANEL} space-y-2`}>
           {loading ? <p className="text-sm text-ink-muted">Loading…</p> : null}
-          {items.map((post) => (
+          {sortedItems.map((post) => (
             <button
               key={post.id}
               type="button"
               className={`block w-full rounded px-3 py-2 text-left text-sm transition ${selected === post.id ? 'bg-gold text-void' : 'hover:bg-surface'}`}
               onClick={() => select(post)}
             >
-              {post.title}
+              <span className="block truncate">{post.title}</span>
+              <span className={`mt-0.5 block text-xs ${selected === post.id ? 'text-void/80' : reviewStatusTone(post.reviewStatus)}`}>
+                {REVIEW_STATUS_LABELS[post.reviewStatus] || REVIEW_STATUS_LABELS.draft}
+                {post.published ? ' · Live' : ''}
+              </span>
             </button>
           ))}
         </div>
 
         <div className={`${ADMIN_PANEL} space-y-4`}>
+          {form.id || form.title ? (
+            <div className={`rounded border px-4 py-3 text-sm ${
+              reviewStatus === 'pending'
+                ? 'border-gold/40 bg-gold/10 text-ink'
+                : reviewStatus === 'rejected'
+                  ? 'border-burgundy/30 bg-burgundy/5 text-ink'
+                  : 'border-border-light bg-surface text-ink-muted'
+            }`}>
+              <span className={`font-medium ${reviewStatusTone(reviewStatus)}`}>
+                {REVIEW_STATUS_LABELS[reviewStatus] || REVIEW_STATUS_LABELS.draft}
+              </span>
+              {writerOnly && reviewStatus === 'pending' ? (
+                <p className="mt-1">Your post is with an admin for review. You cannot publish it yourself.</p>
+              ) : null}
+              {writerOnly && reviewStatus === 'rejected' ? (
+                <p className="mt-1">An admin requested changes. Edit the post, then save a draft or submit again for review.</p>
+              ) : null}
+              {writerOnly && reviewStatus === 'approved' && form.published ? (
+                <p className="mt-1">This post is live on the website.</p>
+              ) : null}
+            </div>
+          ) : null}
           <Field label="Title" value={form.title} onChange={(v) => setForm({ ...form, title: v })} />
           <TextArea label="Excerpt" value={form.excerpt} onChange={(v) => setForm({ ...form, excerpt: v })} />
           <div className="grid gap-4 sm:grid-cols-2">
@@ -456,12 +531,51 @@ export default function AdminBlog() {
             ))}
           </div>
 
-          <div className="flex flex-wrap gap-4">
-            <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={form.featured} onChange={(e) => setForm({ ...form, featured: e.target.checked })} /> Featured</label>
-            <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={form.published !== false} onChange={(e) => setForm({ ...form, published: e.target.checked })} /> Published</label>
-          </div>
+          {canModerateBlog ? (
+            <div className="flex flex-wrap gap-4">
+              <label className="flex items-center gap-2 text-sm">
+                <input type="checkbox" checked={form.featured} onChange={(e) => setForm({ ...form, featured: e.target.checked })} />
+                Featured
+              </label>
+              <label className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={form.published === true}
+                  onChange={(e) => setForm({
+                    ...form,
+                    published: e.target.checked,
+                    reviewStatus: e.target.checked ? 'approved' : (form.reviewStatus === 'approved' ? 'draft' : form.reviewStatus),
+                  })}
+                />
+                Published
+              </label>
+            </div>
+          ) : null}
+
           <div className="flex flex-wrap gap-3">
-            <button type="button" className={ADMIN_BTN} onClick={save}>Save post</button>
+            {writerOnly ? (
+              <>
+                <button type="button" className={ADMIN_BTN} onClick={saveDraft}>Save draft</button>
+                <button
+                  type="button"
+                  className={ADMIN_BTN_OUTLINE}
+                  onClick={submitForReview}
+                  disabled={reviewStatus === 'pending'}
+                >
+                  {reviewStatus === 'pending' ? 'Awaiting review' : 'Submit for review'}
+                </button>
+              </>
+            ) : (
+              <>
+                <button type="button" className={ADMIN_BTN} onClick={saveDraft}>Save post</button>
+                {form.id && reviewStatus === 'pending' ? (
+                  <>
+                    <button type="button" className={ADMIN_BTN} onClick={approvePost}>Approve &amp; publish</button>
+                    <button type="button" className={ADMIN_BTN_OUTLINE} onClick={requestChanges}>Request changes</button>
+                  </>
+                ) : null}
+              </>
+            )}
             {form.id ? <button type="button" className={ADMIN_BTN_DANGER} onClick={remove}>Delete</button> : null}
           </div>
         </div>

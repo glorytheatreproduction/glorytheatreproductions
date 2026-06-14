@@ -1,6 +1,22 @@
 import { mapBlogRow, mapBlogToRow } from '../../lib/mapDbRows'
 import { getSupabase, supabaseIsConfigured } from '../../lib/supabaseClient'
 
+export const REVIEW_STATUS_LABELS = {
+  draft: 'Draft',
+  pending: 'Pending review',
+  approved: 'Approved',
+  rejected: 'Changes requested',
+}
+
+export function reviewStatusTone(status) {
+  switch (status) {
+    case 'pending': return 'text-gold-muted'
+    case 'approved': return 'text-ink'
+    case 'rejected': return 'text-burgundy-light'
+    default: return 'text-ink-muted'
+  }
+}
+
 export async function fetchPublishedPosts() {
   if (!supabaseIsConfigured) return null
   const { data, error } = await getSupabase()

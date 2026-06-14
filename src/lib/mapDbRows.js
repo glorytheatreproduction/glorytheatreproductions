@@ -96,6 +96,7 @@ export function mapBlogRow(row) {
     featured: row.featured,
     content: Array.isArray(row.content) ? row.content : [],
     published: row.published,
+    reviewStatus: row.review_status || 'draft',
     sortOrder: row.sort_order,
   }
 }
@@ -114,7 +115,8 @@ export function mapBlogToRow(post) {
     role: post.role || '',
     featured: Boolean(post.featured),
     content: post.content || [],
-    published: post.published !== false,
+    published: post.published === true,
+    review_status: post.reviewStatus || 'draft',
     sort_order: post.sortOrder ?? 0,
   }
 }

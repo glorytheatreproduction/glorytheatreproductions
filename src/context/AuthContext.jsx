@@ -6,6 +6,7 @@ const AuthContext = createContext(null)
 
 const STAFF_ROLES = new Set(['editor', 'admin', 'super_admin'])
 const ADMIN_ROLES = new Set(['admin', 'super_admin'])
+const BLOG_ADMIN_ROLES = new Set(['blog_admin'])
 const BLOG_WRITER_ROLES = new Set(['blog_writer'])
 const CHECK_IN_ROLES = new Set(['check_in'])
 
@@ -61,9 +62,11 @@ export function AuthProvider({ children }) {
   const isActive = profile?.status === 'active'
   const isStaff = Boolean(isActive && STAFF_ROLES.has(profile?.role))
   const isAdmin = Boolean(isActive && ADMIN_ROLES.has(profile?.role))
+  const isBlogAdmin = Boolean(isActive && BLOG_ADMIN_ROLES.has(profile?.role))
   const isBlogWriter = Boolean(isActive && BLOG_WRITER_ROLES.has(profile?.role))
   const isCheckInStaff = Boolean(isActive && CHECK_IN_ROLES.has(profile?.role))
-  const canAccessCms = isStaff || isBlogWriter || isCheckInStaff
+  const canModerateBlog = isStaff || isBlogAdmin
+  const canAccessCms = isStaff || isBlogAdmin || isBlogWriter || isCheckInStaff
 
   const value = useMemo(
     () => ({
@@ -72,14 +75,16 @@ export function AuthProvider({ children }) {
       loading,
       isStaff,
       isAdmin,
+      isBlogAdmin,
       isBlogWriter,
       isCheckInStaff,
+      canModerateBlog,
       canAccessCms,
       supabaseConfigured: supabaseIsConfigured,
       signIn,
       signOut,
     }),
-    [session, profile, loading, isStaff, isAdmin, isBlogWriter, isCheckInStaff, canAccessCms, signIn, signOut]
+    [session, profile, loading, isStaff, isAdmin, isBlogAdmin, isBlogWriter, isCheckInStaff, canModerateBlog, canAccessCms, signIn, signOut]
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

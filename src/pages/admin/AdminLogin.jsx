@@ -4,7 +4,7 @@ import { useAuth } from '../../context/AuthContext'
 import { ADMIN_BTN, ADMIN_INPUT, ADMIN_LABEL, ADMIN_PANEL } from '../../components/admin/adminStyles'
 
 export default function AdminLogin() {
-  const { signIn, session, canAccessCms, isBlogWriter, isCheckInStaff, isStaff, loading, supabaseConfigured } = useAuth()
+  const { signIn, session, canAccessCms, isBlogAdmin, isBlogWriter, isCheckInStaff, isStaff, loading, supabaseConfigured } = useAuth()
   const location = useLocation()
   const [identifier, setIdentifier] = useState('')
   const [password, setPassword] = useState('')
@@ -13,8 +13,8 @@ export default function AdminLogin() {
 
   if (!loading && session && canAccessCms) {
     const destination = (location.state?.from)
-      || (isCheckInStaff && !isStaff && !isBlogWriter ? '/admin/check-in' : null)
-      || (isBlogWriter && !isStaff ? '/admin/blog' : null)
+      || (isCheckInStaff && !isStaff && !isBlogWriter && !isBlogAdmin ? '/admin/check-in' : null)
+      || ((isBlogWriter || isBlogAdmin) && !isStaff ? '/admin/blog' : null)
       || '/admin'
     return <Navigate to={destination} replace />
   }
@@ -27,7 +27,7 @@ export default function AdminLogin() {
       await signIn(identifier.trim(), password)
     } catch (err) {
       setError(err.message === 'Invalid login credentials'
-        ? 'Username/email or password is incorrect. Blog writers and ticket scanners sign in with their username. Admins use their email.'
+        ? 'Username/email or password is incorrect. Blog writers and ticket scanners sign in with their username. Blog admins, editors, and admins use their email.'
         : err.message || 'Login failed')
     } finally {
       setSubmitting(false)
@@ -40,7 +40,7 @@ export default function AdminLogin() {
         <p className="font-mono text-[10px] uppercase tracking-widest text-gold-muted">Staff only</p>
         <h1 className="mt-2 font-display text-3xl text-ink">CMS Login</h1>
         <p className="mt-2 text-sm text-ink-muted">
-          Blog writers and ticket scanners: use your username. Admins and editors: use your email.
+          Blog writers and ticket scanners: use your username. Blog admins, editors, and admins: use your email.
         </p>
 
         {!supabaseConfigured ? (

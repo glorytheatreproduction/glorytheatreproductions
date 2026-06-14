@@ -7,8 +7,8 @@ const NAV_LINKS = [
   { to: '/admin/home', label: 'Home Page', staffOnly: true },
   { to: '/admin/events', label: 'Events', staffOnly: true },
   { to: '/admin/gallery', label: 'Gallery', staffOnly: true },
-  { to: '/admin/blog', label: 'Blog', writerOk: true },
-  { to: '/admin/media', label: 'Media', writerOk: true },
+  { to: '/admin/blog', label: 'Blog', writerOk: true, blogAdminOk: true },
+  { to: '/admin/media', label: 'Media', writerOk: true, blogAdminOk: true },
   { to: '/admin/check-in', label: 'Check-In', checkInOk: true },
   { to: '/admin/members', label: 'Members', adminOnly: true },
 ]
@@ -18,13 +18,13 @@ function roleLabel(role) {
 }
 
 export default function AdminLayout() {
-  const { signOut, profile, isStaff, isAdmin, isBlogWriter, isCheckInStaff } = useAuth()
+  const { signOut, profile, isStaff, isAdmin, isBlogAdmin, isBlogWriter, isCheckInStaff } = useAuth()
   const { pathname } = useLocation()
 
   const links = NAV_LINKS.filter((link) => {
     if (link.adminOnly) return isAdmin
     if (link.staffOnly) return isStaff
-    if (link.writerOk) return isStaff || isBlogWriter
+    if (link.writerOk) return isStaff || isBlogWriter || isBlogAdmin
     if (link.checkInOk) return isStaff || isCheckInStaff
     return false
   })
@@ -35,7 +35,11 @@ export default function AdminLayout() {
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-6 py-4">
           <div>
             <p className="font-display text-lg text-ink">
-              {isCheckInStaff && !isStaff && !isBlogWriter ? 'Glory Theatre Check-In' : 'Glory Theatre CMS'}
+              {isCheckInStaff && !isStaff && !isBlogWriter && !isBlogAdmin
+                ? 'Glory Theatre Check-In'
+                : isBlogAdmin && !isStaff
+                  ? 'Glory Theatre Blog'
+                  : 'Glory Theatre CMS'}
             </p>
             <p className="font-mono text-[10px] uppercase tracking-widest text-ink-muted">
               {getMemberLoginLabel(profile)} · {roleLabel(profile?.role)}
@@ -81,6 +85,7 @@ export function AdminGuard({ children }) {
     loading,
     session,
     canAccessCms,
+    isBlogAdmin,
     isBlogWriter,
     isCheckInStaff,
     isStaff,
@@ -123,12 +128,17 @@ export function AdminGuard({ children }) {
     )
   }
 
-  if (isCheckInStaff && !isStaff && !isBlogWriter && !pathname.startsWith('/admin/check-in')) {
+  if (isCheckInStaff && !isStaff && !isBlogWriter && !isBlogAdmin && !pathname.startsWith('/admin/check-in')) {
     return <Navigate to="/admin/check-in" replace />
   }
 
-  if (isBlogWriter && !isStaff && !isCheckInStaff && (pathname === '/admin' || pathname === '/admin/')) {
+  if ((isBlogWriter || isBlogAdmin) && !isStaff && !isCheckInStaff && (pathname === '/admin' || pathname === '/admin/')) {
     return <Navigate to="/admin/blog" replace />
+  }
+
+  if (isBlogAdmin && !isStaff && !isBlogWriter && !isCheckInStaff) {
+    const allowed = pathname.startsWith('/admin/blog') || pathname.startsWith('/admin/media')
+    if (!allowed) return <Navigate to="/admin/blog" replace />
   }
 
   return children

@@ -6,7 +6,7 @@ import {
   usernameToAuthEmail,
 } from './lib/staff-auth.cjs'
 
-const ALLOWED_ROLES = new Set(['blog_writer', 'check_in', 'editor', 'viewer'])
+const ALLOWED_ROLES = new Set(['blog_writer', 'blog_admin', 'check_in', 'editor', 'viewer'])
 
 function json(res, statusCode, body) {
   for (const [key, value] of Object.entries(body.headers || {})) {
@@ -174,9 +174,11 @@ export default async function handler(req, res) {
       role,
       message: role === 'blog_writer'
         ? 'Blog writer account ready'
-        : role === 'check_in'
-          ? 'Ticket scanner account ready'
-          : 'Member account ready',
+        : role === 'blog_admin'
+          ? 'Blog admin account ready'
+          : role === 'check_in'
+            ? 'Ticket scanner account ready'
+            : 'Member account ready',
     },
   })
 }

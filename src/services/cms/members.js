@@ -54,6 +54,7 @@ export const ROLE_LABELS = {
   super_admin: 'Super Admin',
   admin: 'Admin',
   editor: 'Editor',
+  blog_admin: 'Blog Admin',
   blog_writer: 'Blog Writer',
   check_in: 'Ticket Scanner',
   viewer: 'Viewer',
