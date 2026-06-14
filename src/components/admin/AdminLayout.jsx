@@ -6,6 +6,7 @@ const NAV_LINKS = [
   { to: '/admin', label: 'Overview', end: true, staffOnly: true },
   { to: '/admin/home', label: 'Home Page', staffOnly: true },
   { to: '/admin/events', label: 'Events', staffOnly: true },
+  { to: '/admin/registrations', label: 'Registrations', staffOnly: true },
   { to: '/admin/gallery', label: 'Gallery', staffOnly: true },
   { to: '/admin/blog', label: 'Blog', writerOk: true, blogAdminOk: true },
   { to: '/admin/media', label: 'Media', writerOk: true, blogAdminOk: true },

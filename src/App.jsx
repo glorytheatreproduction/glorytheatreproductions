@@ -19,6 +19,7 @@ import AdminBlog from './pages/admin/AdminBlog'
 import AdminMedia from './pages/admin/AdminMedia'
 import AdminMembers from './pages/admin/AdminMembers'
 import AdminCheckIn from './pages/admin/AdminCheckIn'
+import AdminRegistrations from './pages/admin/AdminRegistrations'
 
 export default function App() {
   return (
@@ -47,6 +48,7 @@ export default function App() {
           <Route index element={<StaffRoute><AdminDashboard /></StaffRoute>} />
           <Route path="home" element={<StaffRoute><AdminHome /></StaffRoute>} />
           <Route path="events" element={<StaffRoute><AdminEvents /></StaffRoute>} />
+          <Route path="registrations" element={<StaffRoute><AdminRegistrations /></StaffRoute>} />
           <Route path="gallery" element={<StaffRoute><AdminGallery /></StaffRoute>} />
           <Route path="blog" element={<AdminBlog />} />
           <Route path="media" element={<AdminMedia />} />

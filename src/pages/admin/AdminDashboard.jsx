@@ -6,6 +6,7 @@ import { useAuth } from '../../context/AuthContext'
 const cards = [
   { to: '/admin/home', title: 'Home Page', desc: 'Hero, mission, social links, testimonials, season label' },
   { to: '/admin/events', title: 'Events', desc: 'Shows, dates, images, RSVP capacity' },
+  { to: '/admin/registrations', title: 'Registrations', desc: 'Attendee tickets, regenerate PDFs/PNGs' },
   { to: '/admin/gallery', title: 'Gallery', desc: 'Albums and photo collages' },
   { to: '/admin/blog', title: 'Blog', desc: 'Articles and featured posts' },
   { to: '/admin/check-in', title: 'Check-In', desc: 'Scan and verify guest tickets at the door', staffOrCheckIn: true },

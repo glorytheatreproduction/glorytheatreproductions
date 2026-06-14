@@ -18,6 +18,7 @@ export default function RsvpForm({ event, onSuccess }) {
 
     try {
       const result = await submitRsvp({
+        eventId: event.id,
         name: name.trim(),
         email: email.trim(),
         phone: phone.trim(),

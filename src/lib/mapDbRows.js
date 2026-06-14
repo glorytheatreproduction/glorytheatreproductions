@@ -22,6 +22,8 @@ export function mapEventRow(row) {
     maxSeatsPerRsvp: row.max_seats_per_rsvp,
     published: row.published,
     sortOrder: row.sort_order,
+    ticketTemplate: row.ticket_template || 'sacred_stage',
+    ticketSettings: row.ticket_settings || {},
   }
 }
 
@@ -48,6 +50,8 @@ export function mapEventToRow(event) {
     max_seats_per_rsvp: event.maxSeatsPerRsvp ?? 4,
     published: event.published !== false,
     sort_order: event.sortOrder ?? 0,
+    ticket_template: event.ticketTemplate || 'sacred_stage',
+    ticket_settings: event.ticketSettings || {},
   }
 }
 

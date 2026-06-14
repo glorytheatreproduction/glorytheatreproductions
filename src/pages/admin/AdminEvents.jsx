@@ -12,6 +12,8 @@ import {
 import { CATEGORIES } from '../../data/events'
 import { buildDateLabel } from '../../lib/eventDates'
 import { deleteEvent, fetchAllEvents, upsertEvent } from '../../services/cms/events'
+import EventTicketDesign from '../../components/admin/EventTicketDesign'
+import { DEFAULT_TICKET_SETTINGS } from '../../../shared/tickets/ticketTokens.js'
 
 const emptyEvent = () => ({
   id: '',
@@ -35,6 +37,8 @@ const emptyEvent = () => ({
   maxSeatsPerRsvp: 4,
   published: true,
   sortOrder: 0,
+  ticketTemplate: 'sacred_stage',
+  ticketSettings: { ...DEFAULT_TICKET_SETTINGS },
 })
 
 export default function AdminEvents() {
@@ -59,7 +63,11 @@ export default function AdminEvents() {
 
   const select = (event) => {
     setSelected(event?.id || null)
-    setForm(event ? { ...event } : emptyEvent())
+    setForm(event ? {
+      ...event,
+      ticketTemplate: event.ticketTemplate || 'sacred_stage',
+      ticketSettings: { ...DEFAULT_TICKET_SETTINGS, ...(event.ticketSettings || {}) },
+    } : emptyEvent())
     setStatus('')
   }
 
@@ -156,6 +164,20 @@ export default function AdminEvents() {
           </div>
           <Text label="Tags (comma separated)" value={(form.tags || []).join(', ')} onChange={(v) => setField('tags', v.split(',').map((t) => t.trim()).filter(Boolean))} />
           <ImageField label="Event image" value={form.image} onChange={(v) => setField('image', v)} folder="events" />
+
+          <EventTicketDesign
+            event={form}
+            ticketTemplate={form.ticketTemplate || 'sacred_stage'}
+            ticketSettings={form.ticketSettings || DEFAULT_TICKET_SETTINGS}
+            onChange={({ ticketTemplate, ticketSettings }) => {
+              setForm((prev) => ({
+                ...prev,
+                ...(ticketTemplate != null ? { ticketTemplate } : {}),
+                ...(ticketSettings != null ? { ticketSettings } : {}),
+              }))
+            }}
+          />
+
           <div className="flex flex-wrap gap-4">
             <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={form.featured} onChange={(e) => setField('featured', e.target.checked)} /> Featured</label>
             <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={form.published !== false} onChange={(e) => setField('published', e.target.checked)} /> Published</label>
