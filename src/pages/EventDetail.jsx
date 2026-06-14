@@ -3,6 +3,7 @@ import PageHero from '../components/ui/PageHero'
 import SectionLabel from '../components/ui/SectionLabel'
 import AvailabilityBadge from '../components/ui/AvailabilityBadge'
 import GoldButton from '../components/ui/GoldButton'
+import CmsImage from '../components/ui/CmsImage'
 import { isEventBookable } from '../services/cms/events'
 import { useDocumentTitle } from '../hooks/useDocumentTitle'
 import { useResolvedEvent, splitEventDescription } from '../hooks/useResolvedEvent'
@@ -58,7 +59,7 @@ export default function EventDetail() {
           <div className="grid lg:grid-cols-[1fr_320px] gap-12 lg:gap-16">
             <div>
               <div data-reveal className="mb-10 overflow-hidden border border-border-light">
-                <img src={event.image} alt={event.title} className="w-full aspect-[16/9] object-cover" />
+                <CmsImage src={event.image} alt={event.title} className="w-full aspect-[16/9] object-cover" />
               </div>
 
               <div data-reveal data-reveal-delay="1">

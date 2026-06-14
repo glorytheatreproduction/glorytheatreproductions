@@ -1,11 +1,12 @@
 import DateBlock from '../ui/DateBlock'
 import AvailabilityBadge from '../ui/AvailabilityBadge'
+import CmsImage from '../ui/CmsImage'
 
 export default function EventSummaryCard({ event }) {
   return (
     <div className="bg-parchment border border-border-light p-6 md:p-8">
       <div className="overflow-hidden mb-6 -mx-6 md:-mx-8 -mt-6 md:-mt-8">
-        <img
+        <CmsImage
           src={event.image}
           alt={event.title}
           className="w-full aspect-[16/10] object-cover"

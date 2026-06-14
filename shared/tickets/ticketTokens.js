@@ -1,4 +1,5 @@
 /** Default palette — overridable per event via ticket_settings.colors */
+import { sanitizeImageUrl, TICKET_QR_PREVIEW_DATA_URL } from '../lib/cmsImage.js'
 export const DEFAULT_TICKET_COLOR_SETTINGS = {
   outerBackground: '#f8f5f0',
   qrBackground: '#ffffff',
@@ -99,7 +100,7 @@ export function resolveTicketSettings(event = {}, overrides = {}) {
   const colors = resolveTicketColors(settings, settings.accentColor)
 
   return {
-    eventImageUrl: settings.eventImageUrl || event.image || '',
+    eventImageUrl: sanitizeImageUrl(settings.eventImageUrl || event.image || ''),
     venueName: settings.venueName || event.venue || '',
     dateLabel: settings.dateLabel || event.dateLabel || '',
     timeLabel: settings.timeLabel || event.time || '',
@@ -127,7 +128,7 @@ export function buildPreviewTicketData(event = {}, settingsOverrides = {}, fonts
     accentColor: settings.colors.accentColor,
     colors: settings.colors,
     fontsBaseUrl,
-    qrDataUrl: 'https://api.qrserver.com/v1/create-qr-code/?size=280x280&data=PREVIEW',
+    qrDataUrl: TICKET_QR_PREVIEW_DATA_URL,
   }
 }
 

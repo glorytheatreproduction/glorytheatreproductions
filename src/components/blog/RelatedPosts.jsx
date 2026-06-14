@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import SectionLabel from '../ui/SectionLabel'
+import CmsImage from '../ui/CmsImage'
 
 export default function RelatedPosts({ posts }) {
   if (!posts.length) return null
@@ -16,11 +17,10 @@ export default function RelatedPosts({ posts }) {
             className="group block border border-border-light bg-paper overflow-hidden hover:border-gold/30 transition-colors"
           >
             <div className="overflow-hidden">
-              <img
+              <CmsImage
                 src={post.image}
                 alt={post.title}
                 className="w-full aspect-[16/10] object-cover transition-transform duration-500 group-hover:scale-[1.03]"
-                loading="lazy"
               />
             </div>
             <div className="p-5">

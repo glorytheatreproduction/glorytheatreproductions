@@ -1,3 +1,5 @@
+import { sanitizeImageUrl } from './cmsImage'
+
 export function mapEventRow(row) {
   if (!row) return null
   return {
@@ -13,7 +15,7 @@ export function mapEventRow(row) {
     dateLabel: row.date_label,
     time: row.time,
     venue: row.venue,
-    image: row.image,
+    image: sanitizeImageUrl(row.image),
     availability: row.availability,
     featured: row.featured,
     tags: row.tags || [],
@@ -63,8 +65,13 @@ export function mapAlbumRow(row) {
     description: row.description,
     category: row.category,
     date: row.date,
-    cover: row.cover,
-    images: Array.isArray(row.images) ? row.images : [],
+    cover: sanitizeImageUrl(row.cover),
+    images: Array.isArray(row.images)
+      ? row.images.map((image) => ({
+          ...image,
+          src: sanitizeImageUrl(image?.src),
+        }))
+      : [],
     published: row.published,
     sortOrder: row.sort_order,
   }
@@ -94,7 +101,7 @@ export function mapBlogRow(row) {
     categorySlug: row.category_slug,
     date: row.date,
     readTime: row.read_time,
-    image: row.image,
+    image: sanitizeImageUrl(row.image),
     author: row.author,
     role: row.role,
     featured: row.featured,

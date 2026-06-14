@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import SectionLabel from './SectionLabel'
+import { sanitizeImageUrl } from '../../lib/cmsImage'
 
 const titleSizes = {
   default: 'text-5xl md:text-7xl mb-4',
@@ -17,14 +18,15 @@ export default function PageHero({
   narrow = false,
 }) {
   const contentWidth = narrow ? 'max-w-4xl' : 'max-w-7xl'
+  const heroImage = sanitizeImageUrl(image)
 
   return (
     <section className="section-dark relative bg-void min-h-[40vh] flex items-end">
-      {image ? (
+      {heroImage ? (
         <>
           <div
             className="absolute inset-0 bg-cover bg-center opacity-30"
-            style={{ backgroundImage: `url(${image})` }}
+            style={{ backgroundImage: `url(${heroImage})` }}
           />
           <div
             className="absolute inset-0"

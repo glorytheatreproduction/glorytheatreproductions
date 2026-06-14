@@ -7,6 +7,7 @@ import {
   facebookHiddenCount,
   facebookShowsMoreTile,
 } from '../../lib/galleryFacebookLayout'
+import { sanitizeImageUrl } from '../../lib/cmsImage'
 
 function CollagePhoto({ image, className, onClick }) {
   return (
@@ -52,10 +53,13 @@ function MorePhotosTile({ hiddenCount, previewSrc, onClick }) {
 }
 
 function buildVisibleImages(images, cover) {
-  const withSrc = (images || []).filter((image) => image?.src?.trim())
+  const withSrc = (images || [])
+    .map((image) => ({ ...image, src: sanitizeImageUrl(image?.src) }))
+    .filter((image) => image.src)
   if (withSrc.length) return withSrc
-  if (cover?.trim()) {
-    return [{ id: 'cover', src: cover.trim(), title: 'Album cover' }]
+  const coverSrc = sanitizeImageUrl(cover)
+  if (coverSrc) {
+    return [{ id: 'cover', src: coverSrc, title: 'Album cover' }]
   }
   return []
 }

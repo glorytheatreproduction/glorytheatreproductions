@@ -4,6 +4,7 @@ import DateBlock from '../ui/DateBlock'
 import AvailabilityBadge from '../ui/AvailabilityBadge'
 import GoldButton from '../ui/GoldButton'
 import { isEventBookable } from '../../services/cms/events'
+import CmsImage from '../ui/CmsImage'
 
 export default function FeaturedEventBanner({ featured }) {
   if (!featured) return null
@@ -14,7 +15,7 @@ export default function FeaturedEventBanner({ featured }) {
     <div data-reveal className="mb-16 -mx-6 md:-mx-0">
       <div className="grid md:grid-cols-2 w-full min-h-[48vh] md:min-h-[52vh] border border-border-light bg-surface overflow-hidden">
         <div className="relative overflow-hidden min-h-[240px] md:min-h-0 h-full group">
-          <img
+          <CmsImage
             src={featured.image}
             alt={featured.title}
             className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.02]"

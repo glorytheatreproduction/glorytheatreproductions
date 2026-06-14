@@ -50,22 +50,19 @@ export function CmsProvider({ children }) {
       ])
 
       if (eventsResult.status === 'fulfilled' && eventsResult.value !== null) {
-        const remoteEvents = eventsResult.value
-        setEvents(remoteEvents.length > 0 ? remoteEvents : defaultEvents)
+        setEvents(eventsResult.value)
       } else if (eventsResult.status === 'rejected') {
         console.error('[CMS] failed to load events, using defaults', eventsResult.reason)
       }
 
       if (albumsResult.status === 'fulfilled' && albumsResult.value !== null) {
-        const remoteAlbums = albumsResult.value
-        setGalleryAlbums(remoteAlbums.length > 0 ? remoteAlbums : sortAlbumsByDate(defaultAlbums))
+        setGalleryAlbums(sortAlbumsByDate(albumsResult.value))
       } else if (albumsResult.status === 'rejected') {
         console.error('[CMS] failed to load gallery, using defaults', albumsResult.reason)
       }
 
       if (postsResult.status === 'fulfilled' && postsResult.value !== null) {
-        const remotePosts = postsResult.value
-        setBlogPosts(remotePosts.length > 0 ? remotePosts : defaultPosts)
+        setBlogPosts(postsResult.value)
       } else if (postsResult.status === 'rejected') {
         console.error('[CMS] failed to load blog posts, using defaults', postsResult.reason)
       }

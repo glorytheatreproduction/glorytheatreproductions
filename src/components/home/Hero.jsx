@@ -2,6 +2,7 @@ import GoldButton from '../ui/GoldButton'
 import OutlineButton from '../ui/OutlineButton'
 import { useCms } from '../../context/CmsContext'
 import { isEventBookable } from '../../services/cms/events'
+import { sanitizeImageUrl } from '../../lib/cmsImage'
 
 export default function Hero() {
   const { events, homeHero } = useCms()
@@ -9,13 +10,18 @@ export default function Hero() {
   const ticketTarget = featured?.id
     ? (isEventBookable(featured) ? `/events/${featured.id}/tickets` : `/events/${featured.id}`)
     : '/events'
+  const heroBackground = sanitizeImageUrl(homeHero.backgroundImage)
 
   return (
     <section className="section-dark relative min-h-screen flex items-center overflow-hidden">
-      <div
-        className="absolute inset-0 bg-cover bg-center"
-        style={{ backgroundImage: `url('${homeHero.backgroundImage}')` }}
-      />
+      {heroBackground ? (
+        <div
+          className="absolute inset-0 bg-cover bg-center"
+          style={{ backgroundImage: `url('${heroBackground}')` }}
+        />
+      ) : (
+        <div className="absolute inset-0 bg-stage" />
+      )}
       <div
         className="absolute inset-0"
         style={{

@@ -5,6 +5,7 @@ import AvailabilityBadge from '../ui/AvailabilityBadge'
 import GoldButton from '../ui/GoldButton'
 import { useCms } from '../../context/CmsContext'
 import { isEventBookable } from '../../services/cms/events'
+import CmsImage from '../ui/CmsImage'
 
 export default function FeaturedShow() {
   const { events } = useCms()
@@ -20,11 +21,10 @@ export default function FeaturedShow() {
           data-reveal
           className="relative overflow-hidden min-h-[240px] md:min-h-0 h-full group"
         >
-          <img
+          <CmsImage
             src={featured.image}
             alt={featured.title}
             className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.02]"
-            loading="lazy"
           />
           <div className="absolute top-6 left-6 md:top-8 md:left-8">
             <span

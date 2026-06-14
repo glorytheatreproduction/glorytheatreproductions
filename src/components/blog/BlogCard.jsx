@@ -1,14 +1,14 @@
 import { Link } from 'react-router-dom'
+import CmsImage from '../ui/CmsImage'
 
 export default function BlogCard({ post }) {
   return (
     <article className="group bg-paper border border-border-light overflow-hidden transition-all duration-300 hover:border-gold/30">
       <Link to={`/blog/${post.id}`} className="block overflow-hidden">
-        <img
+        <CmsImage
           src={post.image}
           alt={post.title}
           className="w-full aspect-[16/10] object-cover transition-transform duration-500 group-hover:scale-[1.03]"
-          loading="lazy"
         />
       </Link>
 

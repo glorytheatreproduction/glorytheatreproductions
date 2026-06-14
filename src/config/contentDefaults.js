@@ -1,4 +1,5 @@
 import { testimonials as defaultTestimonials } from '../data/blog.js'
+import { sanitizeImageUrl } from '../lib/cmsImage.js'
 
 export const CONTENT_KEYS = {
   homeHero: 'home.hero.v1',
@@ -18,7 +19,7 @@ export const homeHeroDefaults = {
   line2: 'STORY.',
   line2Accent: 'STAGE.',
   tagline: 'A collective of creative youth, proclaiming CHRIST through the arts.',
-  backgroundImage: 'https://images.unsplash.com/photo-1503095396549-807759245b35?w=1920',
+  backgroundImage: '',
   primaryCtaLabel: 'Buy Tickets',
   secondaryCtaLabel: 'See Shows',
   locationLabel: 'Accra, Ghana · Est. 2013',
@@ -86,6 +87,10 @@ export function mergeContent(defaults, remote) {
   for (const [key, value] of Object.entries(remote)) {
     if (value === null || value === undefined) continue
     if (typeof value === 'string' && value.trim() === '' && typeof defaults[key] === 'string' && defaults[key]) {
+      if (/image|cover|photo|src/i.test(key)) {
+        merged[key] = ''
+        continue
+      }
       continue
     }
     if (Array.isArray(value)) {
@@ -93,7 +98,9 @@ export function mergeContent(defaults, remote) {
     } else if (typeof value === 'object' && !Array.isArray(value) && defaults[key] && typeof defaults[key] === 'object') {
       merged[key] = mergeContent(defaults[key], value)
     } else {
-      merged[key] = value
+      merged[key] = typeof value === 'string' && /image|cover|photo|src/i.test(key)
+        ? sanitizeImageUrl(value)
+        : value
     }
   }
   return merged

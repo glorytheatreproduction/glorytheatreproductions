@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import { getCategoryLabel } from '../../data/gallery'
+import CmsImage from '../ui/CmsImage'
 
 export default function AlbumCard({ album, index = 0 }) {
   const photoCount = album.images.length
@@ -12,11 +13,10 @@ export default function AlbumCard({ album, index = 0 }) {
       className="group block bg-paper border border-border-light overflow-hidden transition-all duration-300 hover:border-gold/40 hover:-translate-y-1 hover:shadow-[0_24px_60px_rgba(26,20,16,0.1)]"
     >
       <div className="relative overflow-hidden aspect-[4/3]">
-        <img
+        <CmsImage
           src={album.cover}
           alt={album.title}
           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
-          loading="lazy"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-void/80 via-void/20 to-transparent" />
         <div className="absolute bottom-0 left-0 right-0 p-6">

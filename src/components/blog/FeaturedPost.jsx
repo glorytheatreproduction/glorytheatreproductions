@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import CmsImage from '../ui/CmsImage'
 
 export default function FeaturedPost({ post }) {
   return (
@@ -7,11 +8,10 @@ export default function FeaturedPost({ post }) {
       data-reveal
     >
       <Link to={`/blog/${post.id}`} className="overflow-hidden block group">
-        <img
+        <CmsImage
           src={post.image}
           alt={post.title}
           className="w-full h-full min-h-[300px] object-cover transition-transform duration-500 group-hover:scale-[1.02]"
-          loading="lazy"
         />
       </Link>
 

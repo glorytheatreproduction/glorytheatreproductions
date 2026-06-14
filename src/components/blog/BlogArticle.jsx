@@ -1,4 +1,6 @@
 import { MEDIA_POSITIONS, parseVideoUrl } from '../../lib/videoEmbed'
+import { sanitizeImageUrl } from '../../lib/cmsImage'
+import CmsImage from '../ui/CmsImage'
 
 function MediaFigure({ position, caption, children }) {
   const positionClass = MEDIA_POSITIONS[position] || MEDIA_POSITIONS.center
@@ -48,11 +50,14 @@ export default function BlogArticle({ content }) {
           )
         }
 
-        if (block.type === 'image' && block.src) {
+        if (block.type === 'image') {
+          const imageSrc = sanitizeImageUrl(block.src)
+          if (!imageSrc) return null
+
           return (
             <MediaFigure key={i} position={block.position} caption={block.caption}>
-              <img
-                src={block.src}
+              <CmsImage
+                src={imageSrc}
                 alt={block.caption || ''}
                 className="w-full rounded border border-border-light object-cover"
               />

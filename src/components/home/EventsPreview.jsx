@@ -4,6 +4,7 @@ import DateBlock from '../ui/DateBlock'
 import AvailabilityBadge from '../ui/AvailabilityBadge'
 import { useCms } from '../../context/CmsContext'
 import { isEventBookable } from '../../services/cms/events'
+import CmsImage from '../ui/CmsImage'
 
 export default function EventsPreview() {
   const { events } = useCms()
@@ -24,11 +25,10 @@ export default function EventsPreview() {
               className="bg-surface border border-border-light group transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_24px_60px_rgba(26,20,16,0.12)]"
             >
               <div className="relative overflow-hidden">
-                <img
+                <CmsImage
                   src={event.image}
                   alt={event.title}
                   className="w-full aspect-[16/10] object-cover"
-                  loading="lazy"
                 />
                 <div className="absolute top-4 right-4">
                   <AvailabilityBadge status={event.availability} />

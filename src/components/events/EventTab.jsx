@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import CmsImage from '../ui/CmsImage'
 
 export default function EventTab({ event, index = 0 }) {
   return (
@@ -8,11 +9,10 @@ export default function EventTab({ event, index = 0 }) {
       data-reveal-delay={String((index % 4) + 1)}
       className="group relative block aspect-square overflow-hidden border border-border-light bg-surface transition-all duration-300 hover:border-gold/50 hover:-translate-y-0.5 hover:shadow-[0_12px_32px_rgba(26,20,16,0.12)]"
     >
-      <img
+      <CmsImage
         src={event.image}
         alt={event.title}
         className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-        loading="lazy"
       />
       <div className="absolute inset-0 bg-gradient-to-t from-void/90 via-void/35 to-void/10" />
 
