@@ -1,4 +1,5 @@
 import { mapAlbumRow, mapAlbumToRow } from '../../lib/mapDbRows'
+import { sortAlbumsByDate } from '../../lib/albumDates'
 import { getSupabase, supabaseIsConfigured } from '../../lib/supabaseClient'
 
 export async function fetchPublishedAlbums() {
@@ -9,7 +10,7 @@ export async function fetchPublishedAlbums() {
     .eq('published', true)
     .order('sort_order', { ascending: true })
   if (error) throw error
-  return (data || []).map(mapAlbumRow)
+  return sortAlbumsByDate((data || []).map(mapAlbumRow))
 }
 
 export async function fetchAllAlbums() {
@@ -18,7 +19,7 @@ export async function fetchAllAlbums() {
     .select('*')
     .order('sort_order', { ascending: true })
   if (error) throw error
-  return (data || []).map(mapAlbumRow)
+  return sortAlbumsByDate((data || []).map(mapAlbumRow))
 }
 
 export async function upsertAlbum(album) {
@@ -38,6 +39,8 @@ export function getAlbumById(albums, id) {
 }
 
 export function filterAlbums(albums, category = 'all') {
-  if (category === 'all') return albums
-  return albums.filter((album) => album.category === category)
+  const filtered = category === 'all'
+    ? albums
+    : albums.filter((album) => album.category === category)
+  return sortAlbumsByDate(filtered)
 }

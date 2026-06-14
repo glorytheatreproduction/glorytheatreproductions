@@ -172,7 +172,7 @@ export default function AdminGallery() {
         <div className={`${ADMIN_PANEL} space-y-4`}>
           <Field label="Title" value={form.title} onChange={(v) => setForm({ ...form, title: v })} />
           <TextArea label="Description" value={form.description} onChange={(v) => setForm({ ...form, description: v })} />
-          <Field label="Date label" value={form.date} onChange={(v) => setForm({ ...form, date: v })} />
+          <Field label="Date label" value={form.date} onChange={(v) => setForm({ ...form, date: v })} placeholder="e.g. March 2026 or Season 25–26" />
           <div>
             <label className={ADMIN_LABEL}>Category</label>
             <select className={ADMIN_INPUT} value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })}>
