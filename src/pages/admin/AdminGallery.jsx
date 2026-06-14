@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import MediaPicker from '../../components/admin/MediaPicker'
 import ImageField from '../../components/admin/ImageField'
 import {
   ADMIN_BTN,
@@ -37,6 +38,7 @@ export default function AdminGallery() {
   const [status, setStatus] = useState('')
   const [loading, setLoading] = useState(true)
   const [uploading, setUploading] = useState(false)
+  const [pickIndex, setPickIndex] = useState(null)
 
   const load = async () => {
     setLoading(true)
@@ -65,7 +67,25 @@ export default function AdminGallery() {
   const addPhoto = () => setPhotos((prev) => [...prev, emptyPhoto(prev.length)])
 
   const removePhoto = (index) => {
-    setPhotos((prev) => (prev.length <= 1 ? prev : prev.filter((_, i) => i !== index)))
+    setPhotos((prev) => {
+      if (prev.length <= 1) return [emptyPhoto()]
+      return prev.filter((_, i) => i !== index)
+    })
+  }
+
+  const movePhoto = (index, direction) => {
+    setPhotos((prev) => {
+      const next = [...prev]
+      const target = index + direction
+      if (target < 0 || target >= next.length) return prev
+      ;[next[index], next[target]] = [next[target], next[index]]
+      return next
+    })
+  }
+
+  const setCover = (src) => {
+    if (!src?.trim()) return
+    setForm((prev) => ({ ...prev, cover: src.trim() }))
   }
 
   const onUploadPhotos = async (e) => {
@@ -186,7 +206,12 @@ export default function AdminGallery() {
 
           <div className="space-y-4 rounded border border-border-light p-4">
             <div className="flex flex-wrap items-center justify-between gap-3">
-              <h3 className="font-medium text-ink">Photos</h3>
+              <div>
+                <h3 className="font-medium text-ink">Photos</h3>
+                <p className="mt-1 text-xs text-ink-muted">
+                  {photos.filter((photo) => photo.src?.trim()).length} image{photos.filter((photo) => photo.src?.trim()).length === 1 ? '' : 's'} in this album
+                </p>
+              </div>
               <div className="flex flex-wrap gap-2">
                 <label className={`${ADMIN_BTN} cursor-pointer`}>
                   {uploading ? 'Uploading…' : 'Upload photos'}
@@ -202,29 +227,40 @@ export default function AdminGallery() {
                 <button type="button" className={ADMIN_BTN_OUTLINE} onClick={addPhoto}>Add photo manually</button>
               </div>
             </div>
-            <p className="text-xs text-ink-muted">Select multiple images at once, or add photos one at a time with a URL.</p>
-            {photos.map((photo, index) => (
-              <div key={`${photo.id}-${index}`} className="space-y-3 rounded border border-border-light p-4">
-                <div className="flex items-center justify-between gap-3">
-                  <p className="text-sm font-medium text-ink">Photo {index + 1}</p>
-                  {photos.length > 1 ? (
-                    <button type="button" className="text-sm text-burgundy" onClick={() => removePhoto(index)}>Remove</button>
-                  ) : null}
-                </div>
-                <ImageField
-                  label="Image"
-                  value={photo.src}
-                  onChange={(v) => updatePhoto(index, 'src', v)}
-                  folder="gallery"
-                />
-                <Field
-                  label="Caption"
-                  value={photo.title}
-                  onChange={(v) => updatePhoto(index, 'title', v)}
-                />
+            <p className="text-xs text-ink-muted">Upload multiple images at once. Scroll the grid below to review captions and reorder.</p>
+
+            <div className="max-h-[min(70vh,28rem)] overflow-y-auto rounded border border-border-light bg-surface/40 p-3">
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4">
+                {photos.map((photo, index) => (
+                  <PhotoTile
+                    key={`${photo.id}-${index}`}
+                    photo={photo}
+                    index={index}
+                    total={photos.length}
+                    isCover={form.cover === photo.src}
+                    onCaptionChange={(v) => updatePhoto(index, 'title', v)}
+                    onSrcChange={(v) => updatePhoto(index, 'src', v)}
+                    onRemove={() => removePhoto(index)}
+                    onPick={() => setPickIndex(index)}
+                    onSetCover={() => setCover(photo.src)}
+                    onMoveUp={() => movePhoto(index, -1)}
+                    onMoveDown={() => movePhoto(index, 1)}
+                  />
+                ))}
               </div>
-            ))}
+            </div>
           </div>
+
+          {pickIndex !== null ? (
+            <MediaPicker
+              folder="gallery"
+              onSelect={(url) => {
+                updatePhoto(pickIndex, 'src', url)
+                setPickIndex(null)
+              }}
+              onClose={() => setPickIndex(null)}
+            />
+          ) : null}
 
           <label className="flex items-center gap-2 text-sm">
             <input type="checkbox" checked={form.published !== false} onChange={(e) => setForm({ ...form, published: e.target.checked })} />
@@ -254,6 +290,108 @@ function TextArea({ label, value, onChange }) {
     <div>
       <label className={ADMIN_LABEL}>{label}</label>
       <textarea className={ADMIN_INPUT} rows={3} value={value || ''} onChange={(e) => onChange(e.target.value)} />
+    </div>
+  )
+}
+
+function PhotoTile({
+  photo,
+  index,
+  total,
+  isCover,
+  onCaptionChange,
+  onSrcChange,
+  onRemove,
+  onPick,
+  onSetCover,
+  onMoveUp,
+  onMoveDown,
+}) {
+  const hasImage = Boolean(photo.src?.trim())
+
+  return (
+    <div className="flex flex-col gap-2">
+      <div className="group relative aspect-square overflow-hidden rounded border border-border-light bg-paper">
+        {hasImage ? (
+          <img
+            src={photo.src}
+            alt={photo.title || `Photo ${index + 1}`}
+            className="absolute inset-0 h-full w-full object-cover"
+          />
+        ) : (
+          <div className="flex h-full flex-col items-center justify-center gap-2 p-2 text-center">
+            <p className="text-[10px] uppercase tracking-wider text-ink-muted">No image</p>
+            <button type="button" className={`${ADMIN_BTN_OUTLINE} px-2 py-1 text-[10px]`} onClick={onPick}>
+              Pick
+            </button>
+          </div>
+        )}
+
+        {isCover ? (
+          <span className="absolute left-1 top-1 rounded bg-gold px-1.5 py-0.5 text-[9px] font-mono uppercase tracking-wider text-void">
+            Cover
+          </span>
+        ) : null}
+
+        <div className="absolute right-1 top-1 flex gap-1 opacity-0 transition group-hover:opacity-100">
+          {hasImage && !isCover ? (
+            <button
+              type="button"
+              className="rounded bg-void/80 px-1.5 py-0.5 text-[9px] text-cream"
+              onClick={onSetCover}
+              title="Set as cover"
+            >
+              Cover
+            </button>
+          ) : null}
+          <button
+            type="button"
+            className="rounded bg-burgundy/90 px-1.5 py-0.5 text-[9px] text-cream"
+            onClick={onRemove}
+            title="Remove photo"
+          >
+            ×
+          </button>
+        </div>
+
+        <div className="absolute bottom-1 left-1 flex gap-1 opacity-0 transition group-hover:opacity-100">
+          <button
+            type="button"
+            disabled={index === 0}
+            className="rounded bg-void/80 px-1.5 py-0.5 text-[9px] text-cream disabled:opacity-40"
+            onClick={onMoveUp}
+            title="Move earlier"
+          >
+            ←
+          </button>
+          <button
+            type="button"
+            disabled={index === total - 1}
+            className="rounded bg-void/80 px-1.5 py-0.5 text-[9px] text-cream disabled:opacity-40"
+            onClick={onMoveDown}
+            title="Move later"
+          >
+            →
+          </button>
+        </div>
+      </div>
+
+      <input
+        className={`${ADMIN_INPUT} px-2 py-1.5 text-xs`}
+        value={photo.title || ''}
+        onChange={(e) => onCaptionChange(e.target.value)}
+        placeholder="Caption"
+      />
+
+      {!hasImage ? (
+        <input
+          className={`${ADMIN_INPUT} px-2 py-1.5 text-xs`}
+          type="url"
+          value={photo.src || ''}
+          onChange={(e) => onSrcChange(e.target.value)}
+          placeholder="Image URL"
+        />
+      ) : null}
     </div>
   )
 }
