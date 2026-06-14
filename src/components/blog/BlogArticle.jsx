@@ -1,6 +1,7 @@
 import { MEDIA_POSITIONS, parseVideoUrl } from '../../lib/videoEmbed'
 import { resolveCmsImageUrl } from '../../lib/cmsImage'
 import CmsImage from '../ui/CmsImage'
+import BlogAudioPost from './BlogAudioPost'
 
 function MediaFigure({ position, caption, children }) {
   const positionClass = MEDIA_POSITIONS[position] || MEDIA_POSITIONS.center
@@ -65,6 +66,20 @@ export default function BlogArticle({ content }) {
           )
         }
 
+        if (block.type === 'audio' && (block.url || block.src)) {
+          return (
+            <BlogAudioPost
+              key={i}
+              url={block.url || block.src}
+              title={block.title}
+              artist={block.artist}
+              cover={block.cover}
+              caption={block.caption}
+              position={block.position}
+            />
+          )
+        }
+
         if (block.type === 'video' && (block.url || block.src)) {
           const videoUrl = block.url || block.src
           const parsed = parseVideoUrl(videoUrl)
@@ -101,7 +116,7 @@ export default function BlogArticle({ content }) {
           )
         }
 
-        if (block.type === 'image' || block.type === 'video') {
+        if (block.type === 'image' || block.type === 'video' || block.type === 'audio') {
           return null
         }
 

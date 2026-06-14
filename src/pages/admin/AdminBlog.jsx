@@ -26,6 +26,7 @@ const BLOCK_TYPES = [
   { value: 'quote', label: 'Quote' },
   { value: 'image', label: 'Image' },
   { value: 'video', label: 'Video' },
+  { value: 'audio', label: 'Music' },
 ]
 
 const MEDIA_POSITIONS = [
@@ -44,6 +45,7 @@ const emptyPost = () => ({
   date: '',
   readTime: '5 min',
   image: '',
+  backgroundMusic: { url: '', title: '', artist: '' },
   author: '',
   role: '',
   featured: false,
@@ -65,6 +67,10 @@ function emptyVideoBlock() {
   return { type: 'video', url: '', caption: '', position: 'center' }
 }
 
+function emptyAudioBlock() {
+  return { type: 'audio', url: '', title: '', artist: '', cover: '', caption: '', position: 'center' }
+}
+
 function normalizeBlock(block) {
   if (block?.type === 'image') {
     return {
@@ -78,6 +84,17 @@ function normalizeBlock(block) {
     return {
       type: 'video',
       url: block.url || block.src || '',
+      caption: block.caption || '',
+      position: block.position || 'center',
+    }
+  }
+  if (block?.type === 'audio') {
+    return {
+      type: 'audio',
+      url: block.url || block.src || '',
+      title: block.title || '',
+      artist: block.artist || '',
+      cover: block.cover || '',
       caption: block.caption || '',
       position: block.position || 'center',
     }
@@ -105,6 +122,17 @@ function serializeBlock(block) {
       position: block.position || 'center',
     }
   }
+  if (block.type === 'audio') {
+    return {
+      type: 'audio',
+      url: block.url?.trim() || '',
+      title: block.title?.trim() || '',
+      artist: block.artist?.trim() || '',
+      cover: block.cover?.trim() || '',
+      caption: block.caption?.trim() || '',
+      position: block.position || 'center',
+    }
+  }
   return {
     type: block.type || 'paragraph',
     text: block.text?.trim() || '',
@@ -114,6 +142,7 @@ function serializeBlock(block) {
 function isBlockFilled(block) {
   if (block.type === 'image') return Boolean(block.src?.trim())
   if (block.type === 'video') return Boolean(block.url?.trim())
+  if (block.type === 'audio') return Boolean(block.url?.trim())
   return Boolean(block.text?.trim())
 }
 
@@ -157,7 +186,10 @@ export default function AdminBlog() {
   const select = (post) => {
     setSelected(post?.id || null)
     if (post) {
-      setForm({ ...post })
+      setForm({
+        ...post,
+        backgroundMusic: post.backgroundMusic || { url: '', title: '', artist: '' },
+      })
     } else {
       setForm({
         ...emptyPost(),
@@ -178,6 +210,7 @@ export default function AdminBlog() {
       if (i !== index) return block
       if (type === 'image') return emptyImageBlock()
       if (type === 'video') return emptyVideoBlock()
+      if (type === 'audio') return emptyAudioBlock()
       return { type, text: block.text || block.caption || '' }
     }))
   }
@@ -257,6 +290,27 @@ export default function AdminBlog() {
       setStatus('Video uploaded.')
     } catch (err) {
       setStatus(err.message || 'Video upload failed.')
+    } finally {
+      setUploadingBlock(null)
+      e.target.value = ''
+    }
+  }
+
+  const onUploadAudio = async (e, index) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    setUploadingBlock(index)
+    setStatus('')
+    try {
+      const asset = await uploadMediaAsset(file, { folder: 'blog', title: file.name.replace(/\.[^.]+$/, '') })
+      updateBlock(index, 'url', asset.publicUrl)
+      if (!blocks[index]?.title) {
+        updateBlock(index, 'title', asset.title?.replace(/\.[^.]+$/, '') || file.name.replace(/\.[^.]+$/, ''))
+      }
+      setStatus('Audio uploaded.')
+    } catch (err) {
+      setStatus(err.message || 'Audio upload failed.')
     } finally {
       setUploadingBlock(null)
       e.target.value = ''
@@ -424,6 +478,77 @@ export default function AdminBlog() {
           />
 
           <div className="space-y-4 rounded border border-border-light p-4">
+            <div>
+              <h3 className="font-medium text-ink">Background music</h3>
+              <p className="mt-1 text-xs text-ink-muted">
+                Optional soundtrack that loops while visitors read this post. It autoplays when the post opens; visitors can pause from the floating bar.
+              </p>
+            </div>
+            <Field
+              label="Audio URL"
+              value={form.backgroundMusic?.url || ''}
+              onChange={(v) => setForm({
+                ...form,
+                backgroundMusic: { ...form.backgroundMusic, url: v },
+              })}
+            />
+            <label className={`${ADMIN_BTN_OUTLINE} inline-block cursor-pointer`}>
+              {uploadingBlock === 'soundtrack' ? 'Uploading…' : 'Upload audio file'}
+              <input
+                type="file"
+                accept="audio/*,.mp3,.m4a,.wav,.ogg"
+                className="hidden"
+                disabled={uploadingBlock != null}
+                onChange={async (e) => {
+                  const file = e.target.files?.[0]
+                  if (!file) return
+                  setUploadingBlock('soundtrack')
+                  setStatus('')
+                  try {
+                    const asset = await uploadMediaAsset(file, {
+                      folder: 'blog',
+                      title: file.name.replace(/\.[^.]+$/, ''),
+                    })
+                    const trackTitle = file.name.replace(/\.[^.]+$/, '').replace(/[-_]+/g, ' ').trim()
+                    setForm({
+                      ...form,
+                      backgroundMusic: {
+                        url: asset.publicUrl,
+                        title: form.backgroundMusic?.title || trackTitle,
+                        artist: form.backgroundMusic?.artist || '',
+                      },
+                    })
+                    setStatus('Background music uploaded.')
+                  } catch (err) {
+                    setStatus(err.message || 'Audio upload failed.')
+                  } finally {
+                    setUploadingBlock(null)
+                    e.target.value = ''
+                  }
+                }}
+              />
+            </label>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Field
+                label="Track title"
+                value={form.backgroundMusic?.title || ''}
+                onChange={(v) => setForm({
+                  ...form,
+                  backgroundMusic: { ...form.backgroundMusic, title: v },
+                })}
+              />
+              <Field
+                label="Artist"
+                value={form.backgroundMusic?.artist || ''}
+                onChange={(v) => setForm({
+                  ...form,
+                  backgroundMusic: { ...form.backgroundMusic, artist: v },
+                })}
+              />
+            </div>
+          </div>
+
+          <div className="space-y-4 rounded border border-border-light p-4">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <h3 className="font-medium text-ink">Article content</h3>
               <div className="flex flex-wrap gap-2">
@@ -432,6 +557,9 @@ export default function AdminBlog() {
                 </button>
                 <button type="button" className={ADMIN_BTN_OUTLINE} onClick={() => insertBlock(emptyVideoBlock())}>
                   Insert video
+                </button>
+                <button type="button" className={ADMIN_BTN_OUTLINE} onClick={() => insertBlock(emptyAudioBlock())}>
+                  Insert music
                 </button>
                 <label className={`${ADMIN_BTN_OUTLINE} cursor-pointer`}>
                   {uploadingBlock === 'bulk' ? 'Uploading…' : 'Upload images'}
@@ -448,7 +576,7 @@ export default function AdminBlog() {
               </div>
             </div>
             <p className="text-xs text-ink-muted">
-              Insert images or videos anywhere in the post. Use YouTube/Vimeo links or upload MP4/WebM files. Move sections up or down to reorder.
+              Insert images, videos, or music anywhere in the post. Music sections support a cover image, track title, and artist — similar to an Instagram post. Move sections up or down to reorder.
             </p>
             {blocks.map((block, index) => (
               <div key={index} className="space-y-3 rounded border border-border-light p-4">
@@ -526,7 +654,36 @@ export default function AdminBlog() {
                   </>
                 ) : null}
 
-                {block.type !== 'image' && block.type !== 'video' ? (
+                {block.type === 'audio' ? (
+                  <>
+                    <Field label="Audio URL" value={block.url} onChange={(v) => updateBlock(index, 'url', v)} />
+                    <label className={`${ADMIN_BTN_OUTLINE} inline-block cursor-pointer`}>
+                      {uploadingBlock === index ? 'Uploading…' : 'Upload audio file'}
+                      <input
+                        type="file"
+                        accept="audio/*,.mp3,.m4a,.wav,.ogg"
+                        className="hidden"
+                        disabled={uploadingBlock != null}
+                        onChange={(e) => onUploadAudio(e, index)}
+                      />
+                    </label>
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <Field label="Track title" value={block.title} onChange={(v) => updateBlock(index, 'title', v)} />
+                      <Field label="Artist" value={block.artist} onChange={(v) => updateBlock(index, 'artist', v)} />
+                    </div>
+                    <ImageField
+                      label="Cover image (optional)"
+                      value={block.cover}
+                      onChange={(v) => updateBlock(index, 'cover', v)}
+                      folder="blog"
+                      browseAllMedia
+                    />
+                    <Field label="Caption" value={block.caption} onChange={(v) => updateBlock(index, 'caption', v)} />
+                    <MediaPositionSelect value={block.position} onChange={(v) => updateBlock(index, 'position', v)} />
+                  </>
+                ) : null}
+
+                {block.type !== 'image' && block.type !== 'video' && block.type !== 'audio' ? (
                   <TextArea
                     label="Text"
                     value={block.text}

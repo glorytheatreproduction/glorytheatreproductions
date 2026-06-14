@@ -1,6 +1,7 @@
 import { Link, useParams, Navigate } from 'react-router-dom'
 import PageHero from '../components/ui/PageHero'
 import BlogArticle from '../components/blog/BlogArticle'
+import BlogBackgroundMusic from '../components/blog/BlogBackgroundMusic'
 import RelatedPosts from '../components/blog/RelatedPosts'
 import { useCms } from '../context/CmsContext'
 import { getPostById, getRelatedPosts } from '../services/cms/blog'
@@ -23,9 +24,18 @@ export default function BlogPost() {
   }
 
   const related = getRelatedPosts(blogPosts, post)
+  const soundtrack = post.backgroundMusic
 
   return (
     <>
+      {soundtrack?.url ? (
+        <BlogBackgroundMusic
+          url={soundtrack.url}
+          title={soundtrack.title}
+          artist={soundtrack.artist}
+        />
+      ) : null}
+
       <PageHero
         label={post.category}
         title={post.title}

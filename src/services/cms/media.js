@@ -43,8 +43,9 @@ export async function uploadMediaAssets(files, options = {}) {
   const kind = options.kind || 'image'
   const list = Array.from(files || []).filter((file) => {
     if (kind === 'video') return file.type.startsWith('video/')
+    if (kind === 'audio') return file.type.startsWith('audio/')
     if (kind === 'image') return file.type.startsWith('image/')
-    return file.type.startsWith('image/') || file.type.startsWith('video/')
+    return file.type.startsWith('image/') || file.type.startsWith('video/') || file.type.startsWith('audio/')
   })
   if (!list.length) return []
 

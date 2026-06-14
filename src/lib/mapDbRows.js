@@ -1,6 +1,26 @@
 import { resolveCmsImageUrl } from './cmsImage'
 import { normalizeAlbumImages } from './galleryImages'
 
+function normalizeBackgroundMusic(raw) {
+  if (!raw || typeof raw !== 'object') {
+    return { url: '', title: '', artist: '' }
+  }
+  return {
+    url: resolveCmsImageUrl(raw.url || ''),
+    title: raw.title || '',
+    artist: raw.artist || '',
+  }
+}
+
+function serializeBackgroundMusic(music) {
+  if (!music?.url?.trim()) return {}
+  return {
+    url: music.url.trim(),
+    title: music.title?.trim() || '',
+    artist: music.artist?.trim() || '',
+  }
+}
+
 export function mapEventRow(row) {
   if (!row) return null
   return {
@@ -104,6 +124,7 @@ export function mapBlogRow(row) {
     role: row.role,
     featured: row.featured,
     content: Array.isArray(row.content) ? row.content : [],
+    backgroundMusic: normalizeBackgroundMusic(row.background_music),
     published: row.published,
     reviewStatus: row.review_status || 'draft',
     sortOrder: row.sort_order,
@@ -124,6 +145,7 @@ export function mapBlogToRow(post) {
     role: post.role || '',
     featured: Boolean(post.featured),
     content: post.content || [],
+    background_music: serializeBackgroundMusic(post.backgroundMusic),
     published: post.published === true,
     review_status: post.reviewStatus || 'draft',
     sort_order: post.sortOrder ?? 0,
