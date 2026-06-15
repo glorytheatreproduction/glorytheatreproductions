@@ -43,8 +43,19 @@ export async function inviteMember({ email, username, password, fullName, role =
     body: JSON.stringify(payload),
   })
 
-  const data = await res.json().catch(() => ({}))
-  if (!res.ok) throw new Error(data.error || 'Invite failed')
+  const text = await res.text()
+  let data = {}
+  try {
+    data = text ? JSON.parse(text) : {}
+  } catch {
+    throw new Error(
+      res.ok
+        ? 'Invite failed: invalid server response'
+        : `Invite failed (${res.status}): ${text.slice(0, 120) || 'API unavailable — run npm run dev:vercel locally or check Vercel env vars'}`
+    )
+  }
+
+  if (!res.ok) throw new Error(data.error || `Invite failed (${res.status})`)
   return data
 }
 

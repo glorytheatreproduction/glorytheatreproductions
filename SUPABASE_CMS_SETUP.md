@@ -128,7 +128,9 @@ node scripts/create-admin.mjs
 | Variable | Used by |
 |----------|---------|
 | `VITE_SUPABASE_URL` | Public site + CMS |
-| `VITE_SUPABASE_ANON_KEY` | Public site + CMS |
+| `VITE_SUPABASE_ANON_KEY` | Public site + CMS + invite API |
+| `SUPABASE_URL` | Invite API (same as project URL) |
+| `SUPABASE_SERVICE_ROLE_KEY` | Invite API + admin scripts (**required for Members → Invite**) |
 | `GOOGLE_SHEETS_SPREADSHEET_ID` | RSVP API |
 | `GOOGLE_SHEETS_CLIENT_EMAIL` | RSVP API |
 | `GOOGLE_SHEETS_PRIVATE_KEY` | RSVP API |
@@ -169,4 +171,4 @@ Each album stores photos as JSON:
 - **CMS Not Configured** — add `VITE_SUPABASE_*` env vars and restart Vite.
 - **Access Denied** — run `create-admin.mjs` or set your profile role to `admin` in Supabase.
 - **Upload fails** — confirm storage bucket `public` exists and RLS policies from migration 002 are applied.
-- **Changes not visible** — check items are marked **Published** in the admin editor.
+- **Invite failed** — on Vercel, set `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, and `VITE_SUPABASE_ANON_KEY`. Locally, run `npm run dev:vercel` (not `npm run dev` alone) so `/api/invite-member` works. Only **admin** or **super_admin** can invite members.
