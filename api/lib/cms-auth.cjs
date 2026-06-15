@@ -1,6 +1,13 @@
-const { createClient } = require('@supabase/supabase-js')
-
 const DEFAULT_SCANNER_ROLES = new Set(['check_in', 'editor', 'admin', 'super_admin'])
+
+let createNodeClient
+
+async function loadNodeClient() {
+  if (!createNodeClient) {
+    ({ createNodeClient } = await import('../../shared/lib/supabaseNode.js'))
+  }
+  return createNodeClient
+}
 
 function getSupabaseConfig() {
   const url = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL
@@ -21,12 +28,9 @@ async function verifyBearerAuth(event, allowedRoles = DEFAULT_SCANNER_ROLES) {
   }
 
   const token = authHeader.slice(7)
-  const userClient = createClient(url, anonKey, {
-    auth: { autoRefreshToken: false, persistSession: false },
-  })
-  const adminClient = createClient(url, serviceKey, {
-    auth: { autoRefreshToken: false, persistSession: false },
-  })
+  const createClient = await loadNodeClient()
+  const userClient = createClient(url, anonKey)
+  const adminClient = createClient(url, serviceKey)
 
   const { data: authData, error: authError } = await userClient.auth.getUser(token)
   if (authError || !authData.user) {

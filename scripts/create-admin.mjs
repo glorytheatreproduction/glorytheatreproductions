@@ -2,7 +2,7 @@
 import { loadEnvLocal } from './loadEnvLocal.js'
 loadEnvLocal()
 
-import { createClient } from '@supabase/supabase-js'
+import { createNodeClient } from '../shared/lib/supabaseNode.js'
 
 const url = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL
 const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
@@ -15,7 +15,7 @@ if (!url || !serviceKey || !email || !password) {
   process.exit(1)
 }
 
-const supabase = createClient(url, serviceKey, { auth: { autoRefreshToken: false, persistSession: false } })
+const supabase = createNodeClient(url, serviceKey)
 
 async function findUserByEmail(targetEmail) {
   let page = 1

@@ -1,4 +1,4 @@
-import { createClient } from '@supabase/supabase-js'
+import { createNodeClient } from '../../shared/lib/supabaseNode.js'
 import {
   isValidUsername,
   normalizeUsername,
@@ -89,12 +89,8 @@ export default async function handler(req, res) {
     }
 
     const token = authHeader.slice(7)
-    const userClient = createClient(supabaseUrl, anonKey, {
-      auth: { autoRefreshToken: false, persistSession: false },
-    })
-    const adminClient = createClient(supabaseUrl, serviceKey, {
-      auth: { autoRefreshToken: false, persistSession: false },
-    })
+    const userClient = createNodeClient(supabaseUrl, anonKey)
+    const adminClient = createNodeClient(supabaseUrl, serviceKey)
 
     const { data: authData, error: authError } = await userClient.auth.getUser(token)
     if (authError || !authData.user) {

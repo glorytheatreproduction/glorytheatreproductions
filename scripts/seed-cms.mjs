@@ -2,7 +2,7 @@
 import { loadEnvLocal } from './loadEnvLocal.js'
 loadEnvLocal()
 
-import { createClient } from '@supabase/supabase-js'
+import { createNodeClient } from '../shared/lib/supabaseNode.js'
 import { events, SEASON } from '../src/data/events.js'
 import { galleryAlbums } from '../src/data/gallery.js'
 import { blogPosts, testimonials } from '../src/data/blog.js'
@@ -23,7 +23,7 @@ if (!url || !serviceKey) {
   process.exit(1)
 }
 
-const supabase = createClient(url, serviceKey, { auth: { autoRefreshToken: false, persistSession: false } })
+const supabase = createNodeClient(url, serviceKey)
 
 const siteRows = [
   { key: CONTENT_KEYS.homeHero, value: homeHeroDefaults },
