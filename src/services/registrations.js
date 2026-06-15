@@ -1,4 +1,5 @@
 import { getSupabase } from '../lib/supabaseClient'
+import { invokeEdgeFunction } from '../lib/invokeEdgeFunction'
 
 export function mapRegistrationRow(row) {
   if (!row) return null
@@ -61,11 +62,7 @@ export async function fetchTicketErrors(registrationId) {
 }
 
 export async function regenerateTicket(registrationId) {
-  const { data, error } = await getSupabase().functions.invoke('generate-ticket', {
-    body: { registration_id: registrationId },
-  })
-  if (error) throw error
-  return data
+  return invokeEdgeFunction('generate-ticket', { registration_id: registrationId })
 }
 
 export async function regenerateAllTickets(eventId, onProgress) {
