@@ -1,4 +1,4 @@
-import { getSupabase } from '../../lib/supabaseClient'
+import { getSupabase, supabaseIsConfigured } from '../../lib/supabaseClient'
 import { roleUsesUsername } from '../../lib/staffAuth'
 
 export async function fetchMembers() {
@@ -23,22 +23,29 @@ export async function updateMember(userId, { role, status, fullName }) {
   if (error) throw error
 }
 
-export async function inviteMember({ email, username, password, fullName, role = 'blog_writer' }) {
-  const { data: { session } } = await getSupabase().auth.getSession()
-  if (!session?.access_token) throw new Error('You must be signed in as an admin')
+async function inviteViaEdgeFunction(payload, accessToken) {
+  const { data, error } = await getSupabase().functions.invoke('invite-member', {
+    body: payload,
+    headers: { Authorization: `Bearer ${accessToken}` },
+  })
 
-  const payload = { password, fullName, role }
-  if (roleUsesUsername(role)) {
-    payload.username = username
-  } else {
-    payload.email = email
+  if (error) {
+    throw new Error(error.message || 'Invite failed')
   }
 
+  if (data?.error) {
+    throw new Error(data.error)
+  }
+
+  return data
+}
+
+async function inviteViaVercelApi(payload, accessToken) {
   const res = await fetch('/api/invite-member', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${session.access_token}`,
+      Authorization: `Bearer ${accessToken}`,
     },
     body: JSON.stringify(payload),
   })
@@ -51,12 +58,41 @@ export async function inviteMember({ email, username, password, fullName, role =
     throw new Error(
       res.ok
         ? 'Invite failed: invalid server response'
-        : `Invite failed (${res.status}): ${text.slice(0, 120) || 'API unavailable — run npm run dev:vercel locally or check Vercel env vars'}`
+        : `Invite failed (${res.status}): ${text.slice(0, 120) || 'API unavailable'}`
     )
   }
 
   if (!res.ok) throw new Error(data.error || `Invite failed (${res.status})`)
   return data
+}
+
+export async function inviteMember({ email, username, password, fullName, role = 'blog_writer' }) {
+  const { data: { session } } = await getSupabase().auth.getSession()
+  if (!session?.access_token) throw new Error('You must be signed in as an admin')
+
+  const payload = { password, fullName, role }
+  if (roleUsesUsername(role)) {
+    payload.username = username
+  } else {
+    payload.email = email
+  }
+
+  if (!supabaseIsConfigured) {
+    throw new Error('Supabase is not configured')
+  }
+
+  try {
+    return await inviteViaEdgeFunction(payload, session.access_token)
+  } catch (edgeError) {
+    const message = edgeError?.message || ''
+    const edgeUnavailable = /failed to send|function not found|404|not configured/i.test(message)
+
+    if (!edgeUnavailable) {
+      throw edgeError
+    }
+
+    return inviteViaVercelApi(payload, session.access_token)
+  }
 }
 
 export { getMemberLoginLabel, roleUsesUsername } from '../../lib/staffAuth'

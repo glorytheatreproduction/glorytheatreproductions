@@ -171,4 +171,4 @@ Each album stores photos as JSON:
 - **CMS Not Configured** — add `VITE_SUPABASE_*` env vars and restart Vite.
 - **Access Denied** — run `create-admin.mjs` or set your profile role to `admin` in Supabase.
 - **Upload fails** — confirm storage bucket `public` exists and RLS policies from migration 002 are applied.
-- **Invite failed** — on Vercel, set `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, and `VITE_SUPABASE_ANON_KEY`. Locally, run `npm run dev:vercel` (not `npm run dev` alone) so `/api/invite-member` works. Only **admin** or **super_admin** can invite members.
+- **Invite failed** — member invites run through the Supabase Edge Function `invite-member` (not Vercel). Deploy with `supabase functions deploy invite-member --no-verify-jwt`. Only **admin** or **super_admin** can invite. Locally, use `npm run dev` once Supabase is configured.
