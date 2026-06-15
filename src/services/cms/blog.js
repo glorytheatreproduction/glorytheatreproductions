@@ -38,9 +38,25 @@ export async function fetchAllPosts() {
 }
 
 export async function upsertPost(post) {
-  const { data: { user } } = await getSupabase().auth.getUser()
+  const supabase = getSupabase()
+  const { data: { user } } = await supabase.auth.getUser()
   const row = { ...mapBlogToRow(post), updated_at: new Date().toISOString(), updated_by: user?.id ?? null }
-  const { error } = await getSupabase().from('blog_posts').upsert(row)
+
+  if (user?.id) {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('user_id', user.id)
+      .maybeSingle()
+
+    if (profile?.role === 'blog_writer') {
+      row.author_user_id = user.id
+    } else if (post.authorUserId) {
+      row.author_user_id = post.authorUserId
+    }
+  }
+
+  const { error } = await supabase.from('blog_posts').upsert(row)
   if (error) throw error
 }
 

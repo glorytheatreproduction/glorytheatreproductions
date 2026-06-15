@@ -11,17 +11,28 @@ export async function fetchMembers() {
   return data || []
 }
 
-export async function updateMember(userId, { role, status, fullName }) {
-  const payload = { updated_at: new Date().toISOString() }
+export async function updateMember(userId, { role, status, fullName, email, username, password }) {
+  if (!supabaseIsConfigured) {
+    throw new Error('Supabase is not configured')
+  }
+
+  const payload = { action: 'update', userId }
   if (role) payload.role = role
   if (status) payload.status = status
-  if (fullName != null) payload.full_name = fullName
+  if (fullName != null) payload.fullName = fullName
+  if (email != null) payload.email = email
+  if (username != null) payload.username = username
+  if (password) payload.password = password
 
-  const { error } = await getSupabase()
-    .from('profiles')
-    .update(payload)
-    .eq('user_id', userId)
-  if (error) throw error
+  return invokeEdgeFunction('manage-member', payload)
+}
+
+export async function deleteMember(userId) {
+  if (!supabaseIsConfigured) {
+    throw new Error('Supabase is not configured')
+  }
+
+  return invokeEdgeFunction('manage-member', { action: 'delete', userId })
 }
 
 export async function inviteMember({ email, username, password, fullName, role = 'blog_writer' }) {

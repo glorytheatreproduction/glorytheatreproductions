@@ -128,6 +128,7 @@ export function mapBlogRow(row) {
     published: row.published,
     reviewStatus: row.review_status || 'draft',
     sortOrder: row.sort_order,
+    authorUserId: row.author_user_id || null,
   }
 }
 
@@ -149,6 +150,7 @@ export function mapBlogToRow(post) {
     published: post.published === true,
     review_status: post.reviewStatus || 'draft',
     sort_order: post.sortOrder ?? 0,
+    author_user_id: post.authorUserId || null,
   }
 }
 

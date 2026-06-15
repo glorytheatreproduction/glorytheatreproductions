@@ -53,6 +53,7 @@ const emptyPost = () => ({
   published: false,
   reviewStatus: 'draft',
   sortOrder: 0,
+  authorUserId: null,
 })
 
 function emptyBlock() {
@@ -391,6 +392,9 @@ export default function AdminBlog() {
       <div className="flex items-center justify-between gap-4">
         <div>
           <h1 className="font-display text-3xl text-ink">Blog</h1>
+          {writerOnly ? (
+            <p className="mt-1 text-sm text-ink-muted">Showing your posts only</p>
+          ) : null}
           {canModerateBlog && pendingCount > 0 ? (
             <p className="mt-1 text-sm text-gold-muted">{pendingCount} post{pendingCount === 1 ? '' : 's'} awaiting review</p>
           ) : null}
