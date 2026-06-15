@@ -161,8 +161,10 @@ function MediaPositionSelect({ value, onChange }) {
 }
 
 export default function AdminBlog() {
-  const { profile, canModerateBlog } = useAuth()
-  const writerOnly = !canModerateBlog
+  const { profile, canModerateBlog, isBlogAdmin, isBlogWriter, isStaff } = useAuth()
+  const ownsPostsOnly = isBlogWriter || isBlogAdmin
+  const writerOnly = isBlogWriter
+  const canReviewOthers = isStaff
   const [items, setItems] = useState([])
   const [selected, setSelected] = useState(null)
   const [form, setForm] = useState(emptyPost())
@@ -195,7 +197,7 @@ export default function AdminBlog() {
       setForm({
         ...emptyPost(),
         author: profile?.full_name || '',
-        role: profile?.role === 'blog_writer' ? 'Blog Writer' : '',
+        role: isBlogWriter ? 'Blog Writer' : isBlogAdmin ? 'Blog Admin' : '',
       })
     }
     setBlocks(post?.content?.length ? post.content.map(normalizeBlock) : [emptyBlock()])
@@ -379,7 +381,7 @@ export default function AdminBlog() {
   const pendingCount = items.filter((p) => p.reviewStatus === 'pending').length
   const reviewStatus = form.reviewStatus || 'draft'
 
-  const sortedItems = canModerateBlog
+  const sortedItems = canReviewOthers
     ? [...items].sort((a, b) => {
         const order = { pending: 0, rejected: 1, draft: 2, approved: 3 }
         const diff = (order[a.reviewStatus] ?? 9) - (order[b.reviewStatus] ?? 9)
@@ -392,10 +394,10 @@ export default function AdminBlog() {
       <div className="flex items-center justify-between gap-4">
         <div>
           <h1 className="font-display text-3xl text-ink">Blog</h1>
-          {writerOnly ? (
+          {ownsPostsOnly ? (
             <p className="mt-1 text-sm text-ink-muted">Showing your posts only</p>
           ) : null}
-          {canModerateBlog && pendingCount > 0 ? (
+          {canReviewOthers && pendingCount > 0 ? (
             <p className="mt-1 text-sm text-gold-muted">{pendingCount} post{pendingCount === 1 ? '' : 's'} awaiting review</p>
           ) : null}
         </div>
@@ -736,7 +738,7 @@ export default function AdminBlog() {
             ) : (
               <>
                 <button type="button" className={ADMIN_BTN} onClick={saveDraft}>Save post</button>
-                {form.id && reviewStatus === 'pending' ? (
+                {form.id && canReviewOthers && reviewStatus === 'pending' ? (
                   <>
                     <button type="button" className={ADMIN_BTN} onClick={approvePost}>Approve &amp; publish</button>
                     <button type="button" className={ADMIN_BTN_OUTLINE} onClick={requestChanges}>Request changes</button>

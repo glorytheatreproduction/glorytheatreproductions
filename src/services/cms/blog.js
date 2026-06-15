@@ -49,7 +49,7 @@ export async function upsertPost(post) {
       .eq('user_id', user.id)
       .maybeSingle()
 
-    if (profile?.role === 'blog_writer') {
+    if (profile?.role === 'blog_writer' || profile?.role === 'blog_admin') {
       row.author_user_id = user.id
     } else if (post.authorUserId) {
       row.author_user_id = post.authorUserId
