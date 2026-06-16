@@ -160,7 +160,7 @@ export default function AdminCheckIn() {
                 className={ADMIN_INPUT}
                 value={manualId}
                 onChange={(e) => setManualId(e.target.value)}
-                placeholder="e.g. TST-abc123"
+                placeholder="e.g. 000001"
               />
             </div>
             <button type="submit" className={ADMIN_BTN_OUTLINE} disabled={busy || !manualId.trim()}>

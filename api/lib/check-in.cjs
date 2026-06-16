@@ -19,9 +19,10 @@
  * - CHECK_IN_ADMIN_TOKEN (optional, for admin access control)
  */
 
-const { parseTicketPayload, normalizeEventId } = require('./ticket-payload.cjs');
+const { parseAnyTicketPayload, normalizeEventId } = require('./ticket-payload.cjs');
 const { findRSVPByTicketId, updateCheckInStatus } = require('./google-sheets.cjs');
 const { verifyBearerAuth } = require('./cms-auth.cjs');
+const { checkInViaSupabase, getSupabaseAdmin } = require('./supabase-check-in.cjs');
 
 /**
  * Validate admin token (if configured)
@@ -88,14 +89,13 @@ exports.handler = async (event, context) => {
       };
     }
 
-    // Get ticket ID from QR data or direct input
     let parsedTicketId = null;
     let parsedEventId = null;
+    let parsedRegistrationId = null;
 
     if (qrData) {
-      // Parse QR code payload
       const secretKey = process.env.TICKET_SECRET_KEY || null;
-      const parsed = parseTicketPayload(qrData, secretKey);
+      const parsed = parseAnyTicketPayload(qrData, secretKey);
 
       if (!parsed.valid) {
         return {
@@ -111,8 +111,8 @@ exports.handler = async (event, context) => {
 
       parsedTicketId = parsed.ticketId;
       parsedEventId = parsed.eventId;
+      parsedRegistrationId = parsed.registrationId;
     } else if (ticketId) {
-      // Manual entry fallback
       parsedTicketId = ticketId;
     } else {
       return {
@@ -126,7 +126,23 @@ exports.handler = async (event, context) => {
       };
     }
 
-    // Find ticket using the integration module
+    if (getSupabaseAdmin()) {
+      const supabaseResult = await checkInViaSupabase({
+        ticketId: parsedTicketId,
+        registrationId: parsedRegistrationId,
+        eventId: parsedEventId,
+      });
+
+      if (supabaseResult?.handled) {
+        return {
+          statusCode: supabaseResult.statusCode,
+          headers,
+          body: JSON.stringify(supabaseResult.body),
+        };
+      }
+    }
+
+    // Legacy Google Sheets path — find ticket using the integration module
     const ticket = await findRSVPByTicketId(parsedTicketId);
 
     if (!ticket) {

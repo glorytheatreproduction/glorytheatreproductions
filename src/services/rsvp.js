@@ -55,12 +55,10 @@ export async function submitRsvp({
 }
 
 export async function getRegistrationStatus(registrationId) {
-  const { data, error } = await getSupabase()
-    .from('registrations')
-    .select('ticket_id, ticket_status, png_url, pdf_url')
-    .eq('id', registrationId)
-    .maybeSingle()
+  const { data, error } = await getSupabase().rpc('get_registration_ticket_status', {
+    p_registration_id: registrationId,
+  })
 
   if (error) throw error
-  return data
+  return Array.isArray(data) ? data[0] : data
 }

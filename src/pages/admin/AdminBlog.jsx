@@ -165,6 +165,8 @@ export default function AdminBlog() {
   const ownsPostsOnly = isBlogWriter || isBlogAdmin
   const writerOnly = isBlogWriter
   const canReviewOthers = isStaff
+  const profileAuthorName = profile?.full_name?.trim() || ''
+  const profileRoleLabel = isBlogWriter ? 'Blog Writer' : isBlogAdmin ? 'Blog Admin' : ''
   const [items, setItems] = useState([])
   const [selected, setSelected] = useState(null)
   const [form, setForm] = useState(emptyPost())
@@ -329,7 +331,11 @@ export default function AdminBlog() {
     if (!content.length) {
       throw new Error('Add at least one content section.')
     }
-    return { ...form, id, content }
+
+    const author = ownsPostsOnly ? (profileAuthorName || form.author) : form.author
+    const role = ownsPostsOnly ? (profileRoleLabel || form.role) : form.role
+
+    return { ...form, id, content, author, role }
   }
 
   const persistPost = async (patch, successMessage) => {
@@ -472,8 +478,18 @@ export default function AdminBlog() {
             <Field label="Sort order" value={form.sortOrder} onChange={(v) => setForm({ ...form, sortOrder: Number(v) || 0 })} type="number" />
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="Author" value={form.author} onChange={(v) => setForm({ ...form, author: v })} />
-            <Field label="Role" value={form.role} onChange={(v) => setForm({ ...form, role: v })} />
+            <Field
+              label="Author"
+              value={ownsPostsOnly ? (profileAuthorName || form.author) : form.author}
+              onChange={(v) => setForm({ ...form, author: v })}
+              readOnly={ownsPostsOnly}
+            />
+            <Field
+              label="Role"
+              value={ownsPostsOnly ? (profileRoleLabel || form.role) : form.role}
+              onChange={(v) => setForm({ ...form, role: v })}
+              readOnly={ownsPostsOnly}
+            />
           </div>
           <ImageField
             label="Cover image"
@@ -754,11 +770,18 @@ export default function AdminBlog() {
   )
 }
 
-function Field({ label, value, onChange, type = 'text' }) {
+function Field({ label, value, onChange, type = 'text', readOnly = false }) {
   return (
     <div>
       <label className={ADMIN_LABEL}>{label}</label>
-      <input className={ADMIN_INPUT} type={type} value={value ?? ''} onChange={(e) => onChange(e.target.value)} />
+      <input
+        className={ADMIN_INPUT}
+        type={type}
+        value={value ?? ''}
+        onChange={(e) => onChange(e.target.value)}
+        readOnly={readOnly}
+        disabled={readOnly}
+      />
     </div>
   )
 }

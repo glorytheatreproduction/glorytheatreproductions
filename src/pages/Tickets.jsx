@@ -53,6 +53,7 @@ export default function Tickets() {
               event={event}
               ticketId={success.ticketID}
               email={success.email}
+              registrationId={success.registrationId}
             />
           ) : (
             <div className="grid lg:grid-cols-[1fr_1.1fr] gap-12 lg:gap-16 items-start">

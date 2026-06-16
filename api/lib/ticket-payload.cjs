@@ -43,14 +43,41 @@ function parseTicketPayload(qrData, secretKey = null) {
       valid: true,
       ticketId: parsed.ticketId,
       eventId: parsed.eventId || normalizeEventId(parsed.eventName || ''),
+      registrationId: null,
     }
   } catch {
     return { valid: false, error: 'Invalid QR code format' }
   }
 }
 
+function parseAnyTicketPayload(qrData, secretKey = null) {
+  if (!qrData || typeof qrData !== 'string') {
+    return { valid: false, error: 'Missing QR data' }
+  }
+
+  const trimmed = qrData.trim()
+
+  try {
+    const parsed = JSON.parse(trimmed)
+    const ticketId = parsed.ticket_id || parsed.ticketId
+    if (ticketId) {
+      return {
+        valid: true,
+        ticketId: String(ticketId),
+        eventId: parsed.event_id || parsed.eventId || null,
+        registrationId: parsed.registration_id || parsed.registrationId || null,
+      }
+    }
+  } catch {
+    // fall through to legacy base64url payload
+  }
+
+  return parseTicketPayload(trimmed, secretKey)
+}
+
 module.exports = {
   normalizeEventId,
   createTicketPayload,
   parseTicketPayload,
+  parseAnyTicketPayload,
 }
