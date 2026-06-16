@@ -88,7 +88,7 @@ This imports all events, gallery albums, blog posts, and page copy from the stat
 ## 5. Create your admin account
 
 ```env
-ADMIN_EMAIL=you@example.com
+ADMIN_EMAIL=glorytheatreproduction@gmail.com
 ADMIN_PASSWORD=choose-a-strong-password
 ```
 

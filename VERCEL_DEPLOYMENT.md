@@ -42,7 +42,7 @@ GOOGLE_SHEETS_CLIENT_EMAIL=
 GOOGLE_SHEETS_PRIVATE_KEY=
 GOOGLE_SHEETS_PROJECT_ID=
 SENDGRID_API_KEY=
-FROM_EMAIL=noreply@yourdomain.com
+FROM_EMAIL=Glory Theatre <glorytheatreproduction@gmail.com>
 ```
 
 Optional:

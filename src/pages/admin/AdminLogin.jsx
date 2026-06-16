@@ -64,7 +64,7 @@ export default function AdminLogin() {
                   autoComplete="username"
                   value={identifier}
                   onChange={(e) => setIdentifier(e.target.value)}
-                  placeholder="username or admin@example.com"
+                  placeholder="username or glorytheatreproduction@gmail.com"
                   required
                 />
               </div>

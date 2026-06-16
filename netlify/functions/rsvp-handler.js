@@ -19,6 +19,7 @@
 
 const sgMail = require('@sendgrid/mail');
 const crypto = require('crypto');
+const { resolveFromEmail, SITE_CONTACT_EMAIL } = require('../../shared/lib/siteEmail.js');
 const { generateTicket } = require('./ticket-generator');
 const { createRSVP, checkEventCapacity } = require('./google-sheets');
 const { normalizeEventId } = require('./ticket-payload');
@@ -97,7 +98,7 @@ async function sendTicketEmail(email, name, ticketBuffer, ticketData) {
 
   const msg = {
     to: email,
-    from: process.env.FROM_EMAIL || 'noreply@glorytheatre.com',
+    from: resolveFromEmail(process.env.FROM_EMAIL),
     subject: `Your Ticket: ${eventName}`,
     html: `
       <!DOCTYPE html>
@@ -127,6 +128,7 @@ async function sendTicketEmail(email, name, ticketBuffer, ticketData) {
             <p>We look forward to seeing you!</p>
             <div class="footer">
               <p>Glory Theatre Productions</p>
+              <p>Questions? <a href="mailto:${SITE_CONTACT_EMAIL}">${SITE_CONTACT_EMAIL}</a></p>
               <p>This is a free event. No payment required.</p>
             </div>
           </div>

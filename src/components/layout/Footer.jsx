@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { SOCIAL_PLATFORMS } from '../../config/contentDefaults'
 import { useCms } from '../../context/CmsContext'
+import { SITE_CONTACT_EMAIL } from '../../../shared/lib/siteEmail.js'
 import SiteLogo from './SiteLogo'
 import MarqueeBand from './MarqueeBand'
 
@@ -39,7 +40,7 @@ export default function Footer() {
 
       <footer className="section-dark relative bg-void border-t border-border-dark pt-10 pb-6">
         <div className="max-w-7xl mx-auto px-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 mb-10">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-8 mb-10">
             {/* Brand */}
             <div>
               <Link to="/" className="inline-block">
@@ -70,6 +71,22 @@ export default function Footer() {
                   </li>
                 ))}
               </ul>
+            </div>
+
+            {/* Contact */}
+            <div>
+              <h4
+                className="font-mono text-[11px] uppercase tracking-widest text-gold-light mb-3 leading-none"
+                style={{ fontFamily: 'var(--font-mono)' }}
+              >
+                Contact
+              </h4>
+              <a
+                href={`mailto:${SITE_CONTACT_EMAIL}`}
+                className="text-cream/90 text-sm leading-tight hover:text-gold transition-colors break-all"
+              >
+                {SITE_CONTACT_EMAIL}
+              </a>
             </div>
 
             {/* Connect */}

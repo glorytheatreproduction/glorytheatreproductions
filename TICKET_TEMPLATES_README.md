@@ -17,7 +17,7 @@ Set these in **Supabase Dashboard → Edge Functions → generate-ticket → Sec
 | `SUPABASE_ANON_KEY` | Validates staff JWT for admin regenerate calls |
 | `HTML_RENDER_API_KEY` | [Api2PDF](https://www.api2pdf.com/) API key (Chrome HTML → PNG/PDF) |
 | `RESEND_API_KEY` | [Resend](https://resend.com/) transactional email |
-| `FROM_EMAIL` | Verified sender, e.g. `Glory Theatre <tickets@yourdomain.com>` |
+| `FROM_EMAIL` | Verified sender, e.g. `Glory Theatre <glorytheatreproduction@gmail.com>` |
 | `DATABASE_WEBHOOK_SECRET` | Shared secret matching DB trigger header `x-webhook-secret` |
 | `SITE_URL` | Public site origin for Gotham font URLs in PDF/PNG (e.g. `https://glorytheatreproductions.vercel.app`) |
 

@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useCms } from '../../context/CmsContext'
+import { SITE_CONTACT_EMAIL } from '../../../shared/lib/siteEmail.js'
 
 export default function JoinCTA() {
   const { homeJoin } = useCms()
@@ -52,7 +53,14 @@ export default function JoinCTA() {
 
         {submitted ? (
           <p className="text-cream/80 text-sm mt-4">Welcome to the collective!</p>
-        ) : null}
+        ) : (
+          <p className="text-cream/70 text-sm mt-4">
+            Or reach us at{' '}
+            <a href={`mailto:${SITE_CONTACT_EMAIL}`} className="text-gold-light hover:text-gold transition-colors">
+              {SITE_CONTACT_EMAIL}
+            </a>
+          </p>
+        )}
       </div>
     </section>
   )

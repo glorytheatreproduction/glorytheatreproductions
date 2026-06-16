@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { submitRsvp } from '../../services/rsvp'
+import { SITE_CONTACT_EMAIL } from '../../../shared/lib/siteEmail.js'
 
 export default function RsvpForm({ event, onSuccess }) {
   const [name, setName] = useState('')
@@ -124,6 +125,10 @@ export default function RsvpForm({ event, onSuccess }) {
 
       <p className="text-ink-muted text-xs leading-relaxed">
         Free entry. Your digital ticket will be emailed after you reserve. Present it at the venue for check-in.
+        {' '}Need help?{' '}
+        <a href={`mailto:${SITE_CONTACT_EMAIL}`} className="text-gold hover:text-gold-muted transition-colors">
+          {SITE_CONTACT_EMAIL}
+        </a>
       </p>
 
       <button

@@ -37,7 +37,7 @@ console.log(`  DATABASE_WEBHOOK_SECRET=${webhookSecret || '(run migration 012 fi
 console.log('\nOptional for designed PDF/PNG tickets + email:')
 console.log('  HTML_RENDER_API_KEY=...  (Api2PDF)')
 console.log('  RESEND_API_KEY=...')
-console.log('  FROM_EMAIL=Glory Theatre <tickets@yourdomain.com>')
+console.log('  FROM_EMAIL=Glory Theatre <glorytheatreproduction@gmail.com>')
 console.log('\n  supabase secrets set DATABASE_WEBHOOK_SECRET=... --project-ref xjywhejhnplrdxyulnvk')
 
 const fnUrl = `${url}/functions/v1/generate-ticket`

@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import GoldButton from '../ui/GoldButton'
+import { SITE_CONTACT_EMAIL } from '../../../shared/lib/siteEmail.js'
 
 export default function RsvpSuccess({ event, ticketId, email }) {
   return (
@@ -41,6 +42,14 @@ export default function RsvpSuccess({ event, ticketId, email }) {
           </p>
         </div>
       )}
+
+      <p className="text-ink-muted text-sm leading-relaxed mb-6 max-w-md mx-auto">
+        Questions about your ticket? Email{' '}
+        <a href={`mailto:${SITE_CONTACT_EMAIL}`} className="text-gold hover:text-gold-muted transition-colors">
+          {SITE_CONTACT_EMAIL}
+        </a>
+        .
+      </p>
 
       <div className="flex flex-col sm:flex-row gap-4 justify-center">
         <GoldButton to="/events">Back to Events</GoldButton>
