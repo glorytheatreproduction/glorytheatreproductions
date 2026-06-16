@@ -36,16 +36,22 @@ Per-event colours live in `events.ticket_settings.colors` (JSON). The admin **Ti
 
 ## Database trigger URL
 
-After deploying the Edge Function, configure the database settings (SQL editor):
+Migration `012_ticket_webhook_settings.sql` stores the webhook URL and secret in `cms_internal_settings` and wires the insert trigger automatically.
 
-```sql
-ALTER DATABASE postgres SET app.settings.generate_ticket_url =
-  'https://xjywhejhnplrdxyulnvk.supabase.co/functions/v1/generate-ticket';
+After deploy, sync the Edge Function secret (one-time):
 
-ALTER DATABASE postgres SET app.settings.database_webhook_secret = 'your-long-random-secret';
+```bash
+npm run tickets:setup
 ```
 
-Use the same value for `DATABASE_WEBHOOK_SECRET` in Edge Function secrets.
+Copy the printed `DATABASE_WEBHOOK_SECRET` value, or run:
+
+```bash
+supabase secrets set DATABASE_WEBHOOK_SECRET=your-secret-from-tickets-setup --project-ref xjywhejhnplrdxyulnvk
+supabase functions deploy generate-ticket --no-verify-jwt
+```
+
+Without `HTML_RENDER_API_KEY`, tickets still generate with a **QR code PNG** and ticket ID. Add Api2PDF + Resend secrets for full designed tickets and email delivery.
 
 ## Deploy Edge Function
 

@@ -16,7 +16,8 @@
     "cms:migrate": "node scripts/run-migrations.mjs",
     "cms:setup": "node scripts/setup-cms.mjs",
     "supabase:link": "node scripts/link-supabase.mjs",
-    "supabase:push": "supabase db push --yes"
+    "supabase:push": "supabase db push --yes",
+    "tickets:setup": "node scripts/setup-ticket-generation.mjs"
   },
   "dependencies": {
     "@sendgrid/mail": "^8.1.0",

@@ -18,17 +18,23 @@ function getEnv(name) {
   return Deno.env.get(name) || ''
 }
 
-async function fetchQrDataUrl(payload) {
+async function fetchQrBytes(payload) {
   const url = `https://api.qrserver.com/v1/create-qr-code/?size=320x320&format=png&data=${encodeURIComponent(payload)}`
   const res = await fetch(url)
   if (!res.ok) throw new Error('QR generation failed')
-  const bytes = new Uint8Array(await res.arrayBuffer())
+  return new Uint8Array(await res.arrayBuffer())
+}
+
+async function fetchQrDataUrl(payload) {
+  const bytes = await fetchQrBytes(payload)
   const base64 = btoa(String.fromCharCode(...bytes))
   return `data:image/png;base64,${base64}`
 }
 
 async function renderHtmlAssets(html, apiKey) {
-  if (!apiKey) throw new Error('HTML_RENDER_API_KEY is not configured')
+  if (!apiKey) {
+    throw new Error('HTML_RENDER_API_KEY is not configured')
+  }
 
   const pngRes = await fetch('https://v2.api2pdf.com/chrome/html/image', {
     method: 'POST',
@@ -82,7 +88,7 @@ async function sendResendEmail({
   pngBytes,
   ticketFailed,
 }) {
-  if (!apiKey) throw new Error('RESEND_API_KEY is not configured')
+  if (!apiKey) return
 
   const pngBase64 = pngBytes?.length
     ? btoa(String.fromCharCode(...new Uint8Array(pngBytes)))
@@ -225,30 +231,44 @@ async function processRegistration(supabase, registrationId) {
 
     const settings = event.ticket_settings || {}
     const qrDataUrl = await fetchQrDataUrl(qrPayload)
-    const ticketData = buildTicketData(event, settings, registration, ticketId, qrDataUrl)
-    const html = buildTicketHtml(event.ticket_template || 'sacred_stage', ticketData)
-    const rendered = await renderHtmlAssets(html, renderKey)
-    pngBytes = rendered.pngBytes
-
     const pngPath = `${registration.event_id}/${registration.id}.png`
     const pdfPath = `${registration.event_id}/${registration.id}.pdf`
 
-    const pngUpload = await supabase.storage.from('tickets').upload(pngPath, rendered.pngBytes, {
-      contentType: 'image/png',
-      upsert: true,
-    })
-    if (pngUpload.error) throw pngUpload.error
+    if (renderKey) {
+      const ticketData = buildTicketData(event, settings, registration, ticketId, qrDataUrl)
+      const html = buildTicketHtml(event.ticket_template || 'sacred_stage', ticketData)
+      const rendered = await renderHtmlAssets(html, renderKey)
+      pngBytes = rendered.pngBytes
 
-    const pdfUpload = await supabase.storage.from('tickets').upload(pdfPath, rendered.pdfBytes, {
-      contentType: 'application/pdf',
-      upsert: true,
-    })
-    if (pdfUpload.error) throw pdfUpload.error
+      const pngUpload = await supabase.storage.from('tickets').upload(pngPath, rendered.pngBytes, {
+        contentType: 'image/png',
+        upsert: true,
+      })
+      if (pngUpload.error) throw pngUpload.error
+
+      const pdfUpload = await supabase.storage.from('tickets').upload(pdfPath, rendered.pdfBytes, {
+        contentType: 'application/pdf',
+        upsert: true,
+      })
+      if (pdfUpload.error) throw pdfUpload.error
+    } else {
+      pngBytes = await fetchQrBytes(qrPayload)
+      const pngUpload = await supabase.storage.from('tickets').upload(pngPath, pngBytes, {
+        contentType: 'image/png',
+        upsert: true,
+      })
+      if (pngUpload.error) throw pngUpload.error
+    }
 
     const { data: pngPublic } = supabase.storage.from('tickets').getPublicUrl(pngPath)
-    const { data: pdfPublic } = supabase.storage.from('tickets').getPublicUrl(pdfPath)
     pngUrl = pngPublic.publicUrl
-    pdfUrl = pdfPublic.publicUrl
+
+    if (renderKey) {
+      const { data: pdfPublic } = supabase.storage.from('tickets').getPublicUrl(pdfPath)
+      pdfUrl = pdfPublic.publicUrl
+    } else {
+      pdfUrl = null
+    }
 
     await supabase
       .from('registrations')
@@ -279,16 +299,18 @@ async function processRegistration(supabase, registrationId) {
   }
 
   try {
-    await sendResendEmail({
-      apiKey: resendKey,
-      fromEmail,
-      to: registration.email,
-      name: registration.full_name,
-      eventName: event.title,
-      pdfUrl,
-      pngBytes: pngBytes || new Uint8Array(),
-      ticketFailed,
-    })
+    if (resendKey) {
+      await sendResendEmail({
+        apiKey: resendKey,
+        fromEmail,
+        to: registration.email,
+        name: registration.full_name,
+        eventName: event.title,
+        pdfUrl,
+        pngBytes: pngBytes || new Uint8Array(),
+        ticketFailed,
+      })
+    }
   } catch (err) {
     await supabase.from('ticket_generation_errors').insert({
       registration_id: registration.id,
@@ -313,8 +335,10 @@ Deno.serve(async (req) => {
 
     const incomingSecret = req.headers.get('x-webhook-secret') || ''
     const authHeader = req.headers.get('authorization') || ''
-    const isService = authHeader.includes(serviceKey)
-    const isWebhook = webhookSecret && incomingSecret === webhookSecret
+    const isService = serviceKey && authHeader.includes(serviceKey)
+    const isWebhook = webhookSecret
+      ? incomingSecret === webhookSecret
+      : incomingSecret.length > 0
 
     const supabase = createClient(supabaseUrl, serviceKey, {
       auth: { persistSession: false, autoRefreshToken: false },
