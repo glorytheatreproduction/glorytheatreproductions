@@ -36,7 +36,10 @@ export default function AdminCheckIn() {
 
     setBusy(true)
     try {
-      const { data } = await verifyTicket({ qrData, ticketId })
+      const { ok, data } = await verifyTicket({ qrData, ticketId })
+      if (!data?.status) {
+        throw new Error(data?.message || data?.error || 'Check-in failed')
+      }
       const meta = CHECK_IN_STATUS[data.status] || CHECK_IN_STATUS.error
       const entry = {
         id: `${Date.now()}-${Math.random()}`,
@@ -44,7 +47,7 @@ export default function AdminCheckIn() {
         status: data.status,
         tone: meta.tone,
         label: meta.label,
-        message: data.message,
+        message: data.message || (ok ? '' : 'Check-in failed'),
         attendeeName: data.attendeeName,
         eventName: data.eventName,
         seats: data.seats,
