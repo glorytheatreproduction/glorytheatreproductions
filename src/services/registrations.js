@@ -22,20 +22,23 @@ export function mapRegistrationRow(row) {
 }
 
 export async function createRegistration({ eventId, fullName, email, phone, seats }) {
-  const { data, error } = await getSupabase()
-    .from('registrations')
-    .insert({
-      event_id: eventId,
-      full_name: fullName,
-      email,
-      phone: phone || '',
-      seats: seats || 1,
-    })
-    .select('*')
-    .single()
+  const { data, error } = await getSupabase().rpc('create_public_registration', {
+    p_event_id: eventId,
+    p_full_name: fullName,
+    p_email: email,
+    p_phone: phone || '',
+    p_seats: seats || 1,
+  })
 
   if (error) throw error
-  return mapRegistrationRow(data)
+  const row = Array.isArray(data) ? data[0] : data
+  return mapRegistrationRow(row)
+}
+
+export async function fetchRegistrationCountsByEvent() {
+  const { data, error } = await getSupabase().rpc('registration_counts_by_event')
+  if (error) throw error
+  return Object.fromEntries((data || []).map((row) => [row.event_id, Number(row.registration_count)]))
 }
 
 export async function fetchRegistrationsByEvent(eventId) {

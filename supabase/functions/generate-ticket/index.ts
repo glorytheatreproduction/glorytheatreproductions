@@ -35,6 +35,15 @@ function pngToBase64(pngBytes) {
   return btoa(String.fromCharCode(...new Uint8Array(pngBytes)))
 }
 
+function parseResendError(text) {
+  try {
+    const parsed = JSON.parse(text)
+    return parsed.message || text
+  } catch {
+    return text || 'Resend email failed'
+  }
+}
+
 async function sendTicketEmail({
   apiKey,
   fromEmail,
@@ -54,6 +63,7 @@ async function sendTicketEmail({
     },
     body: JSON.stringify({
       from: fromEmail,
+      reply_to: SITE_CONTACT_EMAIL,
       to: [to],
       subject: `Your Ticket: ${eventName}`,
       html: `
@@ -74,7 +84,7 @@ async function sendTicketEmail({
 
   if (!res.ok) {
     const err = await res.text()
-    throw new Error(err || 'Resend email failed')
+    throw new Error(parseResendError(err))
   }
 }
 

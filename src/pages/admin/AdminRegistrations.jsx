@@ -8,6 +8,7 @@ import {
 import { fetchAllEvents } from '../../services/cms/events'
 import {
   TICKET_STATUS_LABELS,
+  fetchRegistrationCountsByEvent,
   fetchRegistrationsByEvent,
   fetchTicketErrors,
   regenerateAllTickets,
@@ -22,13 +23,26 @@ export default function AdminRegistrations() {
   const [status, setStatus] = useState('')
   const [bulkProgress, setBulkProgress] = useState(null)
   const [errorsByReg, setErrorsByReg] = useState({})
+  const [registrationCounts, setRegistrationCounts] = useState({})
 
   const loadEvents = async () => {
     setLoading(true)
     try {
-      const items = await fetchAllEvents()
+      const [items, counts] = await Promise.all([
+        fetchAllEvents(),
+        fetchRegistrationCountsByEvent().catch(() => ({})),
+      ])
       setEvents(items)
-      if (!eventId && items[0]) setEventId(items[0].id)
+      setRegistrationCounts(counts)
+
+      if (!eventId && items.length) {
+        const withRegs = items
+          .filter((event) => counts[event.id] > 0)
+          .sort((a, b) => (counts[b.id] || 0) - (counts[a.id] || 0))
+        const published = items.filter((event) => event.published)
+        const fallback = withRegs[0] || published[0] || items[0]
+        setEventId(fallback.id)
+      }
     } catch (err) {
       setStatus(err.message)
     } finally {
@@ -105,6 +119,16 @@ export default function AdminRegistrations() {
       </div>
 
       {status ? <p className="text-sm text-ink-muted">{status}</p> : null}
+      {Object.values(errorsByReg).flat().some((err) => /resend|gmail|domain is not verified/i.test(err.error_message || '')) ? (
+        <div className="rounded border border-amber-500/40 bg-amber-50 px-4 py-3 text-sm text-amber-950">
+          Ticket emails are failing because the sender is not verified in Resend. Verify{' '}
+          <strong>glorytheatreproduction@gmail.com</strong> at{' '}
+          <a href="https://resend.com/emails" target="_blank" rel="noreferrer" className="underline">
+            resend.com/emails
+          </a>
+          , then use Regenerate on affected tickets.
+        </div>
+      ) : null}
       {bulkProgress ? (
         <p className="text-sm text-gold-muted">
           Regenerating… {bulkProgress.done}/{bulkProgress.total}
@@ -120,7 +144,11 @@ export default function AdminRegistrations() {
             onChange={(e) => setEventId(e.target.value)}
           >
             {events.map((event) => (
-              <option key={event.id} value={event.id}>{event.title}</option>
+              <option key={event.id} value={event.id}>
+                {event.title}
+                {registrationCounts[event.id] ? ` (${registrationCounts[event.id]})` : ''}
+                {!event.published ? ' — draft' : ''}
+              </option>
             ))}
           </select>
         </div>
