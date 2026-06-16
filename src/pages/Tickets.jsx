@@ -17,7 +17,7 @@ export default function Tickets() {
 
   useDocumentTitle(
     event ? `Reserve Tickets — ${event.title}` : 'Tickets — Glory Theatre Productions',
-    event ? `Reserve your free seat for ${event.title}. Digital ticket delivered by email.` : undefined
+    event ? `Reserve your free seat for ${event.title}. Digital ticket by email or on-screen.` : undefined
   )
   useScrollReveal(eventId, ready, Boolean(success))
 
@@ -54,6 +54,7 @@ export default function Tickets() {
               ticketId={success.ticketID}
               email={success.email}
               registrationId={success.registrationId}
+              noEmail={success.noEmail}
             />
           ) : (
             <div className="grid lg:grid-cols-[1fr_1.1fr] gap-12 lg:gap-16 items-start">

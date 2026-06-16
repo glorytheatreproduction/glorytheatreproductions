@@ -8,6 +8,7 @@ import {
 import { fetchAllEvents } from '../../services/cms/events'
 import {
   TICKET_STATUS_LABELS,
+  downloadRegistrationsCsv,
   fetchRegistrationCountsByEvent,
   fetchRegistrationsByEvent,
   fetchTicketErrors,
@@ -103,6 +104,16 @@ export default function AdminRegistrations() {
   }
 
   const selectedEvent = events.find((e) => e.id === eventId)
+  const checkedInCount = rows.filter((row) => row.checkedIn).length
+
+  const onDownloadCsv = (checkedInOnly = false) => {
+    if (!rows.length) return
+    const { filename, count } = downloadRegistrationsCsv(rows, {
+      eventTitle: selectedEvent?.title || eventId,
+      checkedInOnly,
+    })
+    setStatus(`Downloaded ${count} row${count === 1 ? '' : 's'} to ${filename}.`)
+  }
 
   return (
     <div className="space-y-6">
@@ -119,14 +130,35 @@ export default function AdminRegistrations() {
       </div>
 
       {status ? <p className="text-sm text-ink-muted">{status}</p> : null}
-      {Object.values(errorsByReg).flat().some((err) => /resend|gmail|domain is not verified/i.test(err.error_message || '')) ? (
+      {Object.values(errorsByReg).flat().some((err) => /render failed|qr fallback|html_render/i.test(err.error_message || '')) ? (
         <div className="rounded border border-amber-500/40 bg-amber-50 px-4 py-3 text-sm text-amber-950">
-          Ticket emails are failing because the sender is not verified in Resend. Verify{' '}
-          <strong>glorytheatreproduction@gmail.com</strong> at{' '}
-          <a href="https://resend.com/emails" target="_blank" rel="noreferrer" className="underline">
-            resend.com/emails
-          </a>
-          , then use Regenerate on affected tickets.
+          <p className="font-medium">Tickets are falling back to QR-only images.</p>
+          <p className="mt-1">
+            Set <code className="text-xs">HTML_RENDER_API_KEY</code> (from{' '}
+            <a href="https://www.api2pdf.com/" target="_blank" rel="noreferrer" className="underline">
+              Api2PDF
+            </a>
+            ) and <code className="text-xs">SITE_URL</code> on the Supabase{' '}
+            <code className="text-xs">generate-ticket</code> secrets, then Regenerate tickets.
+          </p>
+        </div>
+      ) : null}
+      {Object.values(errorsByReg).flat().some((err) => /resend|gmail|domain is not verified|sendgrid|email failed/i.test(err.error_message || '')) ? (
+        <div className="rounded border border-amber-500/40 bg-amber-50 px-4 py-3 text-sm text-amber-950">
+          <p className="font-medium">Ticket emails are not delivering.</p>
+          <p className="mt-1">
+            Resend cannot send from <strong>@gmail.com</strong>. Either add{' '}
+            <code className="text-xs">SENDGRID_API_KEY</code> to Supabase Edge Function secrets and verify{' '}
+            <strong>glorytheatreproduction@gmail.com</strong> as a Single Sender in{' '}
+            <a href="https://app.sendgrid.com/settings/sender_auth/senders" target="_blank" rel="noreferrer" className="underline">
+              SendGrid
+            </a>
+            , or verify your own domain in{' '}
+            <a href="https://resend.com/domains" target="_blank" rel="noreferrer" className="underline">
+              Resend
+            </a>{' '}
+            and set <code className="text-xs">FROM_EMAIL</code> to an address on that domain. Then use Regenerate on affected tickets.
+          </p>
         </div>
       ) : null}
       {bulkProgress ? (
@@ -155,6 +187,22 @@ export default function AdminRegistrations() {
         <button type="button" className={ADMIN_BTN_OUTLINE} onClick={() => loadRegistrations()} disabled={!eventId}>
           Refresh
         </button>
+        <button
+          type="button"
+          className={ADMIN_BTN_OUTLINE}
+          onClick={() => onDownloadCsv(false)}
+          disabled={!rows.length}
+        >
+          Download CSV
+        </button>
+        <button
+          type="button"
+          className={ADMIN_BTN_OUTLINE}
+          onClick={() => onDownloadCsv(true)}
+          disabled={!checkedInCount}
+        >
+          Download checked-in ({checkedInCount})
+        </button>
         <button type="button" className={ADMIN_BTN} onClick={onRegenerateAll} disabled={!rows.length || bulkProgress}>
           Regenerate all tickets
         </button>
@@ -170,10 +218,12 @@ export default function AdminRegistrations() {
             <thead>
               <tr className="border-b border-border-light text-ink-muted">
                 <th className="py-2 pr-4">Guest</th>
-                <th className="py-2 pr-4">Email</th>
-                <th className="py-2 pr-4">Seats</th>
+                <th className="py-2 pr-4">Contact</th>
+                <th className="py-2 pr-4">Reserved</th>
+                <th className="py-2 pr-4">Admitted</th>
                 <th className="py-2 pr-4">Ticket ID</th>
-                <th className="py-2 pr-4">Status</th>
+                <th className="py-2 pr-4">Ticket</th>
+                <th className="py-2 pr-4">Checked in</th>
                 <th className="py-2 pr-4">Files</th>
                 <th className="py-2">Actions</th>
               </tr>
@@ -182,10 +232,41 @@ export default function AdminRegistrations() {
               {rows.map((row) => (
                 <tr key={row.id} className="border-b border-border-light/70">
                   <td className="py-3 pr-4">{row.fullName}</td>
-                  <td className="py-3 pr-4">{row.email}</td>
+                  <td className="py-3 pr-4">
+                    {row.email ? (
+                      <span>{row.email}</span>
+                    ) : (
+                      <span className="text-ink-muted">No email</span>
+                    )}
+                    {row.phone ? (
+                      <span className="block text-xs text-ink-muted">{row.phone}</span>
+                    ) : null}
+                  </td>
                   <td className="py-3 pr-4">{row.seats}</td>
+                  <td className="py-3 pr-4">
+                    {row.checkedIn ? (row.checkedInSeats ?? row.seats) : '—'}
+                  </td>
                   <td className="py-3 pr-4 font-mono text-xs">{row.ticketId || '—'}</td>
                   <td className="py-3 pr-4">{TICKET_STATUS_LABELS[row.ticketStatus] || row.ticketStatus}</td>
+                  <td className="py-3 pr-4">
+                    {row.checkedIn ? (
+                      <span className="text-green-800">
+                        Yes
+                        {row.checkedInSeats != null && row.checkedInSeats !== row.seats ? (
+                          <span className="block text-xs text-ink-muted">
+                            Adjusted from {row.seats} reserved
+                          </span>
+                        ) : null}
+                        {row.checkedInAt ? (
+                          <span className="block text-xs text-ink-muted">
+                            {new Date(row.checkedInAt).toLocaleString()}
+                          </span>
+                        ) : null}
+                      </span>
+                    ) : (
+                      <span className="text-ink-muted">No</span>
+                    )}
+                  </td>
                   <td className="py-3 pr-4">
                     <div className="flex flex-wrap gap-2">
                       {row.pdfUrl ? <a href={row.pdfUrl} target="_blank" rel="noreferrer" className="text-gold-muted hover:text-gold">PDF</a> : null}

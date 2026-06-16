@@ -6,6 +6,7 @@ export default function RsvpForm({ event, onSuccess }) {
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [phone, setPhone] = useState('')
+  const [noEmail, setNoEmail] = useState(false)
   const [seats, setSeats] = useState(1)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -15,21 +16,41 @@ export default function RsvpForm({ event, onSuccess }) {
   const handleSubmit = async (e) => {
     e.preventDefault()
     setError('')
+
+    const trimmedEmail = email.trim()
+    const trimmedPhone = phone.trim()
+
+    if (!noEmail && !trimmedEmail) {
+      setError('Email is required, or check “I don’t have an email” below.')
+      return
+    }
+
+    if (noEmail && !trimmedPhone) {
+      setError('Please enter a phone number so we can reach you about your reservation.')
+      return
+    }
+
     setLoading(true)
 
     try {
       const result = await submitRsvp({
         eventId: event.id,
         name: name.trim(),
-        email: email.trim(),
-        phone: phone.trim(),
+        email: noEmail ? '' : trimmedEmail,
+        phone: trimmedPhone,
         seats,
         eventName: event.title,
         eventDate: event.dateLabel,
         eventTime: event.time,
         eventVenue: event.venue,
+        noEmail,
       })
-      onSuccess({ ...result, email: email.trim() })
+      onSuccess({
+        ...result,
+        email: noEmail ? '' : trimmedEmail,
+        phone: trimmedPhone,
+        noEmail,
+      })
     } catch (err) {
       setError(err.message || 'Something went wrong. Please try again.')
     } finally {
@@ -58,24 +79,41 @@ export default function RsvpForm({ event, onSuccess }) {
         />
       </div>
 
-      <div>
-        <label
-          htmlFor="rsvp-email"
-          className="block font-mono text-[10px] uppercase tracking-widest text-gold-muted mb-2"
-          style={{ fontFamily: 'var(--font-mono)' }}
-        >
-          Email Address *
-        </label>
+      <label className="flex items-start gap-3 cursor-pointer">
         <input
-          id="rsvp-email"
-          type="email"
-          required
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          className="w-full bg-paper border border-border-light px-4 py-3 text-ink text-sm placeholder-ink-muted/40 focus:outline-none focus:border-gold/50"
-          placeholder="you@example.com"
+          type="checkbox"
+          checked={noEmail}
+          onChange={(e) => {
+            setNoEmail(e.target.checked)
+            if (e.target.checked) setEmail('')
+            setError('')
+          }}
+          className="mt-1 h-4 w-4 accent-gold"
         />
-      </div>
+        <span className="text-sm text-ink-muted leading-relaxed">
+          I don&apos;t have an email address
+        </span>
+      </label>
+
+      {!noEmail ? (
+        <div>
+          <label
+            htmlFor="rsvp-email"
+            className="block font-mono text-[10px] uppercase tracking-widest text-gold-muted mb-2"
+            style={{ fontFamily: 'var(--font-mono)' }}
+          >
+            Email Address *
+          </label>
+          <input
+            id="rsvp-email"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="w-full bg-paper border border-border-light px-4 py-3 text-ink text-sm placeholder-ink-muted/40 focus:outline-none focus:border-gold/50"
+            placeholder="you@example.com"
+          />
+        </div>
+      ) : null}
 
       <div>
         <label
@@ -83,7 +121,7 @@ export default function RsvpForm({ event, onSuccess }) {
           className="block font-mono text-[10px] uppercase tracking-widest text-gold-muted mb-2"
           style={{ fontFamily: 'var(--font-mono)' }}
         >
-          Phone (optional)
+          Phone {noEmail ? '*' : '(optional)'}
         </label>
         <input
           id="rsvp-phone"
@@ -93,6 +131,11 @@ export default function RsvpForm({ event, onSuccess }) {
           className="w-full bg-paper border border-border-light px-4 py-3 text-ink text-sm placeholder-ink-muted/40 focus:outline-none focus:border-gold/50"
           placeholder="+233 ..."
         />
+        {noEmail ? (
+          <p className="mt-2 text-xs text-ink-muted leading-relaxed">
+            Your ticket will appear on the next screen — save or screenshot it for entry at the venue.
+          </p>
+        ) : null}
       </div>
 
       <div>
@@ -124,7 +167,11 @@ export default function RsvpForm({ event, onSuccess }) {
       )}
 
       <p className="text-ink-muted text-xs leading-relaxed">
-        Free entry. Your digital ticket will be emailed after you reserve. Present it at the venue for check-in.
+        {noEmail ? (
+          <>Free entry. Your digital ticket will appear on the confirmation screen — screenshot or download it for check-in.</>
+        ) : (
+          <>Free entry. Your digital ticket will be emailed after you reserve. Present it at the venue for check-in.</>
+        )}
         {' '}Need help?{' '}
         <a href={`mailto:${SITE_CONTACT_EMAIL}`} className="text-gold hover:text-gold-muted transition-colors">
           {SITE_CONTACT_EMAIL}

@@ -5,10 +5,11 @@ import { supabaseIsConfigured } from '../../lib/supabaseClient'
 import { getRegistrationStatus } from '../../services/rsvp'
 import { SITE_CONTACT_EMAIL } from '../../../shared/lib/siteEmail.js'
 
-export default function RsvpSuccess({ event, ticketId, email, registrationId }) {
+export default function RsvpSuccess({ event, ticketId, email, registrationId, noEmail = false }) {
   const [resolvedTicketId, setResolvedTicketId] = useState(
     ticketId && ticketId !== 'Pending' ? ticketId : ''
   )
+  const [ticketPngUrl, setTicketPngUrl] = useState('')
   const [generating, setGenerating] = useState(
     Boolean(registrationId && supabaseIsConfigured && (!ticketId || ticketId === 'Pending'))
   )
@@ -29,9 +30,12 @@ export default function RsvpSuccess({ event, ticketId, email, registrationId }) 
 
         if (status?.ticket_id) {
           setResolvedTicketId(status.ticket_id)
+          if (status.png_url) setTicketPngUrl(status.png_url)
           setGenerating(false)
           return
         }
+
+        if (status?.png_url) setTicketPngUrl(status.png_url)
 
         if (status?.ticket_status === 'failed') {
           setTicketFailed(true)
@@ -75,20 +79,34 @@ export default function RsvpSuccess({ event, ticketId, email, registrationId }) 
         {email && !generating && !ticketFailed ? (
           <> A digital ticket has been sent to <strong className="text-ink">{email}</strong>.</>
         ) : null}
-        {generating ? (
+        {noEmail && !generating && !ticketFailed && resolvedTicketId ? (
+          <> Save or screenshot your ticket below and present it at the venue for entry.</>
+        ) : null}
+        {generating && email ? (
           <> Your digital ticket is being prepared — it will arrive at <strong className="text-ink">{email}</strong> shortly.</>
         ) : null}
+        {generating && noEmail ? (
+          <> Your digital ticket is being prepared — it will appear below in a moment.</>
+        ) : null}
         {ticketFailed ? (
-          <> We could not generate your ticket automatically. Please email{' '}
+          <> We could not generate your ticket automatically.{email ? (
+            <> Please email{' '}
             <a href={`mailto:${SITE_CONTACT_EMAIL}`} className="text-gold hover:text-gold-muted transition-colors">
               {SITE_CONTACT_EMAIL}
             </a>{' '}
             with your name and event.</>
+          ) : (
+            <> Please contact{' '}
+            <a href={`mailto:${SITE_CONTACT_EMAIL}`} className="text-gold hover:text-gold-muted transition-colors">
+              {SITE_CONTACT_EMAIL}
+            </a>{' '}
+            or visit the box office with your name and this event.</>
+          )}</>
         ) : null}
       </p>
 
       {resolvedTicketId ? (
-        <div className="inline-block bg-surface border border-border-light px-6 py-4 mb-8">
+        <div className="inline-block bg-surface border border-border-light px-6 py-4 mb-8 max-w-full">
           <p
             className="font-mono text-[10px] uppercase tracking-widest text-gold-muted mb-1"
             style={{ fontFamily: 'var(--font-mono)' }}
@@ -101,6 +119,25 @@ export default function RsvpSuccess({ event, ticketId, email, registrationId }) 
           >
             {resolvedTicketId}
           </p>
+          {ticketPngUrl ? (
+            <>
+              {noEmail ? (
+                <img
+                  src={ticketPngUrl}
+                  alt="Your ticket"
+                  className="mt-4 max-w-full rounded border border-border-light"
+                />
+              ) : null}
+              <a
+                href={ticketPngUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="mt-4 inline-block text-sm text-gold hover:text-gold-muted transition-colors"
+              >
+                Download ticket (PNG) →
+              </a>
+            </>
+          ) : null}
         </div>
       ) : generating ? (
         <p className="text-ink-muted text-sm mb-8">Generating ticket…</p>

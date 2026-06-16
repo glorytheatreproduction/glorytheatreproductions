@@ -1,5 +1,6 @@
 import { getSupabase } from '../lib/supabaseClient'
 import { invokeEdgeFunction } from '../lib/invokeEdgeFunction'
+import { buildCsv, downloadCsv, formatExportDate } from '../lib/exportCsv'
 
 export function mapRegistrationRow(row) {
   if (!row) return null
@@ -17,6 +18,7 @@ export function mapRegistrationRow(row) {
     ticketStatus: row.ticket_status,
     checkedIn: row.checked_in,
     checkedInAt: row.checked_in_at,
+    checkedInSeats: row.checked_in_seats,
     createdAt: row.created_at,
   }
 }
@@ -25,7 +27,7 @@ export async function createRegistration({ eventId, fullName, email, phone, seat
   const { data, error } = await getSupabase().rpc('create_public_registration', {
     p_event_id: eventId,
     p_full_name: fullName,
-    p_email: email,
+    p_email: email || '',
     p_phone: phone || '',
     p_seats: seats || 1,
   })
@@ -90,4 +92,46 @@ export const TICKET_STATUS_LABELS = {
   pending: 'Pending',
   generated: 'Generated',
   failed: 'Failed',
+}
+
+function slugifyFilename(value) {
+  return String(value || 'event')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '') || 'event'
+}
+
+export function downloadRegistrationsCsv(registrations, { eventTitle, checkedInOnly = false } = {}) {
+  const rows = checkedInOnly ? registrations.filter((row) => row.checkedIn) : registrations
+
+  const headers = [
+    'Guest Name',
+    'Email',
+    'Phone',
+    'Reserved Seats',
+    'Admitted Seats',
+    'Ticket ID',
+    'Ticket Status',
+    'Checked In',
+    'Checked In At',
+    'Registered At',
+  ]
+
+  const data = rows.map((row) => [
+    row.fullName,
+    row.email,
+    row.phone,
+    row.seats,
+    row.checkedIn ? (row.checkedInSeats ?? row.seats) : '',
+    row.ticketId || '',
+    TICKET_STATUS_LABELS[row.ticketStatus] || row.ticketStatus,
+    row.checkedIn ? 'Yes' : 'No',
+    formatExportDate(row.checkedInAt),
+    formatExportDate(row.createdAt),
+  ])
+
+  const suffix = checkedInOnly ? '-checked-in' : '-registrations'
+  const filename = `${slugifyFilename(eventTitle)}${suffix}.csv`
+  downloadCsv(filename, buildCsv(headers, data))
+  return { filename, count: rows.length }
 }

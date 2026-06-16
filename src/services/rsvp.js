@@ -11,22 +11,26 @@ export async function submitRsvp({
   eventDate,
   eventTime,
   eventVenue,
+  noEmail = false,
 }) {
   if (supabaseIsConfigured && eventId) {
     const registration = await createRegistration({
       eventId,
       fullName: name,
-      email,
+      email: email || null,
       phone,
       seats,
     })
 
     return {
       success: true,
-      message: 'RSVP confirmed! Your ticket will arrive by email shortly.',
+      message: noEmail || !email
+        ? 'RSVP confirmed! Your ticket will appear on the next screen.'
+        : 'RSVP confirmed! Your ticket will arrive by email shortly.',
       ticketID: registration.ticketId || 'Pending',
       registrationId: registration.id,
-      email,
+      email: email || '',
+      noEmail: Boolean(noEmail || !email),
     }
   }
 

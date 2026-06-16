@@ -7,7 +7,13 @@ import {
   ADMIN_LABEL,
   ADMIN_PANEL,
 } from '../../components/admin/adminStyles'
-import { CHECK_IN_STATUS, verifyTicket } from '../../services/checkIn'
+import {
+  CHECK_IN_STATUS,
+  confirmCheckIn,
+  formatSeatCount,
+  lookupTicket,
+  updateAdmittedSeats,
+} from '../../services/checkIn'
 
 const SCANNER_ID = 'ticket-scanner'
 
@@ -17,16 +23,83 @@ function resultTone(tone) {
   return 'border-burgundy bg-red-50 text-red-950'
 }
 
+function SeatStepper({ value, onChange, min = 1, max = 20, disabled = false }) {
+  const adjust = (delta) => {
+    const next = Math.min(max, Math.max(min, (Number(value) || min) + delta))
+    onChange(next)
+  }
+
+  return (
+    <div className="flex items-center gap-2">
+      <button
+        type="button"
+        className={ADMIN_BTN_OUTLINE}
+        onClick={() => adjust(-1)}
+        disabled={disabled || Number(value) <= min}
+        aria-label="Fewer seats"
+      >
+        −
+      </button>
+      <input
+        type="number"
+        min={min}
+        max={max}
+        value={value}
+        disabled={disabled}
+        onChange={(e) => onChange(Math.min(max, Math.max(min, Number(e.target.value) || min)))}
+        className={`${ADMIN_INPUT} w-20 text-center`}
+      />
+      <button
+        type="button"
+        className={ADMIN_BTN_OUTLINE}
+        onClick={() => adjust(1)}
+        disabled={disabled || Number(value) >= max}
+        aria-label="More seats"
+      >
+        +
+      </button>
+    </div>
+  )
+}
+
 export default function AdminCheckIn() {
   const [scanning, setScanning] = useState(false)
   const [manualId, setManualId] = useState('')
   const [busy, setBusy] = useState(false)
   const [result, setResult] = useState(null)
+  const [pending, setPending] = useState(null)
+  const [seatsToAdmit, setSeatsToAdmit] = useState(1)
+  const [correcting, setCorrecting] = useState(null)
   const [history, setHistory] = useState([])
   const scannerRef = useRef(null)
   const lastScanRef = useRef({ value: '', at: 0 })
 
-  const handleScanResult = useCallback(async ({ qrData, ticketId }) => {
+  const recordResult = (data, ok = true) => {
+    if (!data?.status) return null
+    const meta = CHECK_IN_STATUS[data.status] || CHECK_IN_STATUS.error
+    const entry = {
+      id: `${Date.now()}-${Math.random()}`,
+      at: new Date().toLocaleTimeString(),
+      status: data.status,
+      tone: meta.tone,
+      label: meta.label,
+      message: data.message || (ok ? '' : 'Check-in failed'),
+      attendeeName: data.attendeeName,
+      eventName: data.eventName,
+      seats: data.seats,
+      reservedSeats: data.reservedSeats,
+      ticketId: data.ticketId,
+      checkInTimestamp: data.checkInTimestamp,
+      registrationId: data.registrationId,
+    }
+    setResult(entry)
+    if (data.status === 'checked_in') {
+      setHistory((prev) => [entry, ...prev].slice(0, 12))
+    }
+    return entry
+  }
+
+  const handleLookup = useCallback(async ({ qrData, ticketId }) => {
     const key = qrData || ticketId
     const now = Date.now()
     if (key && lastScanRef.current.value === key && now - lastScanRef.current.at < 2500) {
@@ -35,41 +108,99 @@ export default function AdminCheckIn() {
     lastScanRef.current = { value: key, at: now }
 
     setBusy(true)
+    setCorrecting(null)
     try {
-      const { ok, data } = await verifyTicket({ qrData, ticketId })
+      const { ok, data } = await lookupTicket({ qrData, ticketId })
       if (!data?.status) {
-        throw new Error(data?.message || data?.error || 'Check-in failed')
+        throw new Error(data?.message || data?.error || 'Ticket lookup failed')
       }
-      const meta = CHECK_IN_STATUS[data.status] || CHECK_IN_STATUS.error
-      const entry = {
-        id: `${Date.now()}-${Math.random()}`,
-        at: new Date().toLocaleTimeString(),
-        status: data.status,
-        tone: meta.tone,
-        label: meta.label,
-        message: data.message || (ok ? '' : 'Check-in failed'),
-        attendeeName: data.attendeeName,
-        eventName: data.eventName,
-        seats: data.seats,
-        checkInTimestamp: data.checkInTimestamp,
+
+      if (data.status === 'ready_to_check_in') {
+        setPending(data)
+        setSeatsToAdmit(data.seatsToAdmit || data.reservedSeats || 1)
+        setResult(null)
+        return
       }
-      setResult(entry)
-      setHistory((prev) => [entry, ...prev].slice(0, 12))
+
+      setPending(null)
+      recordResult(data, ok)
+
+      if (data.status === 'already_checked_in') {
+        setCorrecting({
+          registrationId: data.registrationId,
+          reservedSeats: data.reservedSeats,
+          seatsToAdmit: data.seats || data.admittedSeats || data.reservedSeats || 1,
+        })
+        setSeatsToAdmit(data.seats || data.admittedSeats || data.reservedSeats || 1)
+      }
     } catch (err) {
-      const entry = {
+      setPending(null)
+      setResult({
         id: `${Date.now()}`,
         at: new Date().toLocaleTimeString(),
         status: 'error',
         tone: 'error',
         label: 'Error',
         message: err.message,
-      }
-      setResult(entry)
-      setHistory((prev) => [entry, ...prev].slice(0, 12))
+      })
     } finally {
       setBusy(false)
     }
   }, [])
+
+  const onConfirmCheckIn = async () => {
+    if (!pending?.registrationId) return
+    setBusy(true)
+    try {
+      const { ok, data } = await confirmCheckIn({
+        registrationId: pending.registrationId,
+        seatsToAdmit,
+      })
+      if (!data?.status) {
+        throw new Error(data?.message || 'Check-in failed')
+      }
+      setPending(null)
+      recordResult(data, ok)
+    } catch (err) {
+      setResult({
+        id: `${Date.now()}`,
+        at: new Date().toLocaleTimeString(),
+        status: 'error',
+        tone: 'error',
+        label: 'Error',
+        message: err.message,
+      })
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const onSaveCorrection = async () => {
+    if (!correcting?.registrationId) return
+    setBusy(true)
+    try {
+      const { ok, data } = await updateAdmittedSeats({
+        registrationId: correcting.registrationId,
+        seatsToAdmit,
+      })
+      if (!data?.status) {
+        throw new Error(data?.message || 'Could not update admission count')
+      }
+      setCorrecting(null)
+      recordResult(data, ok)
+    } catch (err) {
+      setResult({
+        id: `${Date.now()}`,
+        at: new Date().toLocaleTimeString(),
+        status: 'error',
+        tone: 'error',
+        label: 'Error',
+        message: err.message,
+      })
+    } finally {
+      setBusy(false)
+    }
+  }
 
   const stopScanner = useCallback(async () => {
     const scanner = scannerRef.current
@@ -94,7 +225,7 @@ export default function AdminCheckIn() {
       await scanner.start(
         { facingMode: 'environment' },
         { fps: 10, qrbox: { width: 260, height: 260 } },
-        (decoded) => handleScanResult({ qrData: decoded }),
+        (decoded) => handleLookup({ qrData: decoded }),
         () => {}
       )
     } catch (err) {
@@ -109,7 +240,7 @@ export default function AdminCheckIn() {
         message: err.message || 'Could not start camera. Use manual ticket entry instead.',
       })
     }
-  }, [handleScanResult, stopScanner])
+  }, [handleLookup, stopScanner])
 
   useEffect(() => () => { stopScanner() }, [stopScanner])
 
@@ -117,17 +248,33 @@ export default function AdminCheckIn() {
     e.preventDefault()
     const ticketId = manualId.trim()
     if (!ticketId) return
-    await handleScanResult({ ticketId })
+    await handleLookup({ ticketId })
     setManualId('')
   }
+
+  const sessionStats = history.reduce(
+    (totals, entry) => {
+      if (entry.status !== 'checked_in') return totals
+      totals.guests += 1
+      totals.seats += Number(entry.seats) || 0
+      return totals
+    },
+    { guests: 0, seats: 0 },
+  )
 
   return (
     <div className="space-y-6">
       <div>
         <h1 className="font-display text-3xl text-ink">Ticket Check-In</h1>
         <p className="mt-2 text-sm text-ink-muted">
-          Scan QR codes on guest tickets or enter a ticket ID manually to verify entry.
+          Scan a ticket, confirm how many guests are actually arriving, and adjust if the party is larger or smaller than reserved.
         </p>
+        {sessionStats.guests > 0 ? (
+          <p className="mt-2 text-sm font-medium text-ink">
+            This session: {sessionStats.guests} guest{sessionStats.guests === 1 ? '' : 's'} checked in ·{' '}
+            {formatSeatCount(sessionStats.seats)} admitted
+          </p>
+        ) : null}
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
@@ -167,32 +314,126 @@ export default function AdminCheckIn() {
               />
             </div>
             <button type="submit" className={ADMIN_BTN_OUTLINE} disabled={busy || !manualId.trim()}>
-              Verify ticket
+              Look up ticket
             </button>
           </form>
         </section>
 
         <section className="space-y-4">
-          {result ? (
+          {pending ? (
+            <div className={`rounded border p-5 ${resultTone('warning')}`}>
+              <p className="text-xs uppercase tracking-widest opacity-80">Confirm admission</p>
+              <h2 className="mt-1 font-display text-2xl">{pending.attendeeName}</h2>
+              <p className="text-sm">{pending.eventName}</p>
+              {pending.ticketId ? <p className="mt-1 font-mono text-sm">Ticket #{pending.ticketId}</p> : null}
+              <p className="mt-4 text-sm">
+                Reserved: <strong>{formatSeatCount(pending.reservedSeats)}</strong>
+              </p>
+              <div className="mt-4 space-y-2">
+                <label className={ADMIN_LABEL}>Guests to admit now</label>
+                <SeatStepper value={seatsToAdmit} onChange={setSeatsToAdmit} disabled={busy} />
+                {Number(seatsToAdmit) !== Number(pending.reservedSeats) ? (
+                  <p className="text-xs">
+                    Adjusted from reserved {formatSeatCount(pending.reservedSeats)} → admit {formatSeatCount(seatsToAdmit)}.
+                  </p>
+                ) : null}
+              </div>
+              <div className="mt-5 flex flex-wrap gap-2">
+                <button type="button" className={ADMIN_BTN} onClick={onConfirmCheckIn} disabled={busy}>
+                  Confirm check-in
+                </button>
+                <button
+                  type="button"
+                  className={ADMIN_BTN_OUTLINE}
+                  onClick={() => { setPending(null); setSeatsToAdmit(1) }}
+                  disabled={busy}
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          ) : null}
+
+          {correcting && !pending ? (
+            <div className={`rounded border p-5 ${resultTone('warning')}`}>
+              <p className="text-xs uppercase tracking-widest opacity-80">Correct admission count</p>
+              <p className="mt-2 text-sm">
+                Reserved {formatSeatCount(correcting.reservedSeats)}. Update how many guests were actually admitted.
+              </p>
+              <div className="mt-4 space-y-2">
+                <label className={ADMIN_LABEL}>Guests admitted</label>
+                <SeatStepper value={seatsToAdmit} onChange={setSeatsToAdmit} disabled={busy} />
+              </div>
+              <div className="mt-5 flex flex-wrap gap-2">
+                <button type="button" className={ADMIN_BTN} onClick={onSaveCorrection} disabled={busy}>
+                  Save correction
+                </button>
+                <button
+                  type="button"
+                  className={ADMIN_BTN_OUTLINE}
+                  onClick={() => setCorrecting(null)}
+                  disabled={busy}
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          ) : null}
+
+          {result && !pending ? (
             <div className={`rounded border p-5 ${resultTone(result.tone)}`}>
               <p className="text-xs uppercase tracking-widest opacity-80">{result.at}</p>
               <h2 className="mt-1 font-display text-2xl">{result.label}</h2>
-              <p className="mt-2 text-sm">{result.message}</p>
+              {result.status === 'checked_in' && result.seats ? (
+                <div className="mt-4 inline-flex min-w-[120px] flex-col items-center rounded border border-current/20 bg-white/50 px-6 py-4">
+                  <p className="font-mono text-[10px] uppercase tracking-widest opacity-80">Admitted</p>
+                  <p className="font-display text-5xl leading-none">{result.seats}</p>
+                  <p className="mt-1 text-sm font-medium">{formatSeatCount(result.seats)}</p>
+                  {result.reservedSeats && Number(result.reservedSeats) !== Number(result.seats) ? (
+                    <p className="mt-2 text-xs opacity-80">
+                      Reserved {formatSeatCount(result.reservedSeats)}
+                    </p>
+                  ) : null}
+                </div>
+              ) : null}
+              <p className="mt-3 text-sm">{result.message}</p>
               {result.attendeeName ? <p className="mt-3 font-medium">Guest: {result.attendeeName}</p> : null}
+              {result.ticketId ? <p className="text-sm font-mono">Ticket #{result.ticketId}</p> : null}
               {result.eventName ? <p className="text-sm">Event: {result.eventName}</p> : null}
-              {result.seats ? <p className="text-sm">Seats: {result.seats}</p> : null}
-              {result.checkInTimestamp ? <p className="mt-2 text-xs opacity-80">Checked in: {result.checkInTimestamp}</p> : null}
+              {result.status === 'already_checked_in' && !correcting ? (
+                <button
+                  type="button"
+                  className={`${ADMIN_BTN_OUTLINE} mt-4`}
+                  onClick={() => {
+                    setCorrecting({
+                      registrationId: result.registrationId,
+                      reservedSeats: result.reservedSeats,
+                      seatsToAdmit: result.seats || result.reservedSeats || 1,
+                    })
+                    setSeatsToAdmit(result.seats || result.reservedSeats || 1)
+                  }}
+                >
+                  Correct admission count
+                </button>
+              ) : null}
+              {result.checkInTimestamp ? (
+                <p className="mt-2 text-xs opacity-80">
+                  Checked in: {new Date(result.checkInTimestamp).toLocaleString()}
+                </p>
+              ) : null}
             </div>
-          ) : (
+          ) : null}
+
+          {!result && !pending ? (
             <div className={`${ADMIN_PANEL} text-sm text-ink-muted`}>
-              Scan results will appear here.
+              Scan results will appear here. You can adjust seat counts before confirming.
             </div>
-          )}
+          ) : null}
 
           <div className={`${ADMIN_PANEL} space-y-3`}>
             <h3 className="font-medium text-ink">Recent scans</h3>
             {history.length === 0 ? (
-              <p className="text-sm text-ink-muted">No tickets scanned yet.</p>
+              <p className="text-sm text-ink-muted">No tickets checked in yet.</p>
             ) : (
               history.map((entry) => (
                 <div key={entry.id} className="rounded border border-border-light px-3 py-2 text-sm">
@@ -201,6 +442,14 @@ export default function AdminCheckIn() {
                     <span className="text-xs text-ink-muted">{entry.at}</span>
                   </div>
                   {entry.attendeeName ? <p className="text-ink-muted">{entry.attendeeName}</p> : null}
+                  {entry.seats ? (
+                    <p className="text-xs font-medium text-ink">
+                      Admitted: {formatSeatCount(entry.seats)}
+                      {entry.reservedSeats && Number(entry.reservedSeats) !== Number(entry.seats)
+                        ? ` (reserved ${formatSeatCount(entry.reservedSeats)})`
+                        : ''}
+                    </p>
+                  ) : null}
                   <p className="text-xs text-ink-muted">{entry.message}</p>
                 </div>
               ))
