@@ -47,6 +47,7 @@ export function parseAnyTicketPayload(qrData) {
         ticketId: String(ticketId),
         eventId: parsed.event_id || parsed.eventId || null,
         registrationId: parsed.registration_id || parsed.registrationId || null,
+        guestName: parsed.full_name || parsed.guestName || parsed.attendeeName || null,
       }
     }
   } catch {

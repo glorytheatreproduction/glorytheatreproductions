@@ -5,7 +5,7 @@ import { supabaseIsConfigured } from '../../lib/supabaseClient'
 import { getRegistrationStatus } from '../../services/rsvp'
 import { SITE_CONTACT_EMAIL } from '../../../shared/lib/siteEmail.js'
 
-export default function RsvpSuccess({ event, ticketId, email, registrationId, noEmail = false }) {
+export default function RsvpSuccess({ event, ticketId, email, guestName, registrationId, noEmail = false }) {
   const [resolvedTicketId, setResolvedTicketId] = useState(
     ticketId && ticketId !== 'Pending' ? ticketId : ''
   )
@@ -107,6 +107,17 @@ export default function RsvpSuccess({ event, ticketId, email, registrationId, no
 
       {resolvedTicketId ? (
         <div className="inline-block bg-surface border border-border-light px-6 py-4 mb-8 max-w-full">
+          {guestName ? (
+            <p
+              className="font-mono text-[10px] uppercase tracking-widest text-gold-muted mb-1"
+              style={{ fontFamily: 'var(--font-mono)' }}
+            >
+              Guest
+            </p>
+          ) : null}
+          {guestName ? (
+            <p className="text-lg text-ink mb-4">{guestName}</p>
+          ) : null}
           <p
             className="font-mono text-[10px] uppercase tracking-widest text-gold-muted mb-1"
             style={{ fontFamily: 'var(--font-mono)' }}

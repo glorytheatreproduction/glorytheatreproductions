@@ -57,6 +57,12 @@ export default function TicketSacredStage({ data, className = '' }) {
             <p className="mt-2 text-xs leading-snug opacity-82" style={{ fontWeight: F.body }}>
               {d.venue}
             </p>
+            <p
+              className="mt-2.5 text-base leading-tight tracking-tight"
+              style={{ fontFamily: TICKET_FONTS.heading, fontWeight: F.heading }}
+            >
+              {d.attendeeName}
+            </p>
           </div>
 
           <div

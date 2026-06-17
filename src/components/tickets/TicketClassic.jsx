@@ -56,6 +56,24 @@ export default function TicketClassic({ data, className = '' }) {
       </div>
 
       <div
+        className="px-5 py-4 border-b border-white/[0.06]"
+        style={{ background: c.infoBackground, color: c.infoText }}
+      >
+        <span
+          className="mb-1 block text-[9px] uppercase tracking-[0.14em]"
+          style={{ color: c.labelText, fontFamily: TICKET_FONTS.label, fontWeight: F.label }}
+        >
+          Guest
+        </span>
+        <span
+          className="block text-sm leading-snug"
+          style={{ fontFamily: TICKET_FONTS.heading, fontWeight: F.heading }}
+        >
+          {d.attendeeName}
+        </span>
+      </div>
+
+      <div
         className="grid grid-cols-2"
         style={{ background: c.infoBackground, color: c.infoText }}
       >

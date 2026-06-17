@@ -49,6 +49,7 @@ export default function RsvpForm({ event, onSuccess }) {
         ...result,
         email: noEmail ? '' : trimmedEmail,
         phone: trimmedPhone,
+        guestName: name.trim(),
         noEmail,
       })
     } catch (err) {

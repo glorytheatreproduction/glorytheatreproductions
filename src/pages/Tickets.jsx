@@ -53,6 +53,7 @@ export default function Tickets() {
               event={event}
               ticketId={success.ticketID}
               email={success.email}
+              guestName={success.guestName}
               registrationId={success.registrationId}
               noEmail={success.noEmail}
             />

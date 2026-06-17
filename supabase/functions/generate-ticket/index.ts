@@ -371,6 +371,7 @@ async function processRegistration(supabase, registrationId) {
       event_id: registration.event_id,
       registration_id: registration.id,
       ticket_id: ticketId,
+      full_name: registration.full_name,
     })
 
     const settings = event.ticket_settings || {}

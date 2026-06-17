@@ -30,6 +30,7 @@ function classicHtml(data) {
       </div>
     </div>
     <div class="details">
+      <div class="detail span-2"><span class="label">Guest</span><span class="value">${esc(data.attendeeName)}</span></div>
       <div class="detail"><span class="label">Date</span><span class="value">${esc(data.date)}</span></div>
       <div class="detail"><span class="label">Time</span><span class="value">${esc(data.time)}</span></div>
       <div class="detail"><span class="label">Amount</span><span class="value">${esc(data.amount)}</span></div>
@@ -64,6 +65,7 @@ function sacredStageHtml(data) {
           <span class="eyebrow">Glory Theatre</span>
           <h1 class="event">${esc(data.eventName)}</h1>
           <p class="venue">${esc(data.venue)}</p>
+          <p class="guest">${esc(data.attendeeName)}</p>
         </div>
         <div class="qr-box">
           <img class="qr" src="${qr}" alt="QR code" />
@@ -171,7 +173,11 @@ function ticketStyles(data = {}) {
       border-right: 1px solid rgba(255,255,255,.06);
     }
     .classic .detail:nth-child(2n) { border-right: none; }
-    .classic .detail:nth-last-child(-n+2) { border-bottom: none; }
+    .classic .detail:nth-last-child(-n+1) { border-bottom: none; }
+    .classic .detail.span-2 {
+      grid-column: 1 / -1;
+      border-right: none;
+    }
     .classic .label {
       display: block;
       font-family: ${f.label};
@@ -305,6 +311,14 @@ function ticketStyles(data = {}) {
       font-weight: ${w.body};
       opacity: .82;
       line-height: 1.45;
+    }
+    .sacred .guest {
+      margin-top: 10px;
+      font-family: ${f.heading};
+      font-weight: ${w.heading};
+      font-size: 16px;
+      line-height: 1.3;
+      letter-spacing: -0.01em;
     }
     .sacred .qr-box {
       flex-shrink: 0;

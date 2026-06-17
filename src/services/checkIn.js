@@ -26,6 +26,14 @@ function mapRegistration(registration) {
   }
 }
 
+function mapCandidate(registration) {
+  const mapped = mapRegistration(registration)
+  return {
+    ...mapped,
+    label: `${mapped.attendeeName} · Ticket #${mapped.ticketId || '—'} · ${mapped.eventName}`,
+  }
+}
+
 async function findRegistration(supabase, { ticketId, registrationId }) {
   let query = supabase.from('registrations').select(REGISTRATION_SELECT)
 
@@ -41,10 +49,29 @@ async function findRegistration(supabase, { ticketId, registrationId }) {
   return { registration: data, error }
 }
 
-function parseTicketInput({ qrData, ticketId }) {
+async function findRegistrationsByName(supabase, guestName, { eventId, partial = false } = {}) {
+  const name = guestName.trim()
+  if (!name) return { registrations: [], error: null }
+
+  let query = supabase.from('registrations').select(REGISTRATION_SELECT)
+
+  if (partial) {
+    query = query.ilike('full_name', `%${name}%`)
+  } else {
+    query = query.ilike('full_name', name)
+  }
+
+  if (eventId) query = query.eq('event_id', eventId)
+
+  const { data, error } = await query.order('created_at', { ascending: false }).limit(10)
+  return { registrations: data || [], error }
+}
+
+function parseTicketInput({ qrData, ticketId, guestName }) {
   let parsedTicketId = ticketId?.trim() || null
   let parsedEventId = null
   let parsedRegistrationId = null
+  let parsedGuestName = guestName?.trim() || null
 
   if (qrData) {
     const parsed = parseAnyTicketPayload(qrData)
@@ -54,13 +81,57 @@ function parseTicketInput({ qrData, ticketId }) {
     parsedTicketId = parsed.ticketId
     parsedEventId = parsed.eventId
     parsedRegistrationId = parsed.registrationId
+    parsedGuestName = parsed.guestName || parsedGuestName
   }
 
-  if (!parsedTicketId && !parsedRegistrationId) {
-    return { error: 'Missing ticket data. Scan the QR code or enter a ticket ID.' }
+  if (!parsedTicketId && !parsedRegistrationId && !parsedGuestName) {
+    return { error: 'Scan the QR code, enter a ticket ID, or search by guest name.' }
   }
 
-  return { parsedTicketId, parsedEventId, parsedRegistrationId }
+  return { parsedTicketId, parsedEventId, parsedRegistrationId, parsedGuestName }
+}
+
+function evaluateRegistration(registration, parsedEventId) {
+  if (!registration) {
+    return buildResult({
+      success: false,
+      status: 'not_found',
+      message: 'Ticket not found',
+    }, false)
+  }
+
+  const mapped = mapRegistration(registration)
+
+  if (parsedEventId && registration.event_id !== parsedEventId) {
+    return buildResult({
+      success: false,
+      status: 'event_mismatch',
+      message: 'Ticket does not match this event',
+      ticketEvent: mapped.eventName,
+      ...mapped,
+    }, false)
+  }
+
+  if (registration.checked_in) {
+    return buildResult({
+      success: false,
+      status: 'already_checked_in',
+      message: `Already checked in — admitted ${formatSeatCount(mapped.admittedSeats)} (reserved ${formatSeatCount(mapped.reservedSeats)}).`,
+      seats: mapped.admittedSeats,
+      reservedSeats: mapped.reservedSeats,
+      ...mapped,
+    })
+  }
+
+  return buildResult({
+    success: true,
+    status: 'ready_to_check_in',
+    message: `Reserved ${formatSeatCount(mapped.reservedSeats)}. Confirm how many guests to admit.`,
+    seats: mapped.reservedSeats,
+    reservedSeats: mapped.reservedSeats,
+    seatsToAdmit: mapped.reservedSeats,
+    ...mapped,
+  })
 }
 
 async function ensureScannerSession() {
@@ -98,16 +169,57 @@ export function formatAdmitMessage(seatsToAdmit, reservedSeats) {
   return `Admit ${admit} guests — ${admit} seats on this ticket.`
 }
 
-export async function lookupTicket({ qrData, ticketId }) {
-  const supabase = await ensureScannerSession()
-  const parsed = parseTicketInput({ qrData, ticketId })
+export function isTicketIdLookup(value) {
+  return /^\d{1,6}$/.test(String(value || '').trim())
+}
 
+export async function lookupTicket({ qrData, ticketId, guestName, eventId, registrationId }) {
+  const supabase = await ensureScannerSession()
+
+  if (registrationId) {
+    const { registration, error } = await findRegistration(supabase, { registrationId })
+    if (error) handleSupabaseError(error, 'Could not look up ticket')
+    return evaluateRegistration(registration, eventId || null)
+  }
+
+  const parsed = parseTicketInput({ qrData, ticketId, guestName })
   if (parsed.error) {
     return buildResult({
       success: false,
       status: 'invalid',
       message: parsed.error,
     }, false)
+  }
+
+  if (parsed.parsedGuestName && !parsed.parsedTicketId && !parsed.parsedRegistrationId) {
+    let { registrations, error } = await findRegistrationsByName(supabase, parsed.parsedGuestName, { eventId })
+
+    if (error) handleSupabaseError(error, 'Could not search by guest name')
+
+    if (!registrations.length) {
+      const partial = await findRegistrationsByName(supabase, parsed.parsedGuestName, { eventId, partial: true })
+      if (partial.error) handleSupabaseError(partial.error, 'Could not search by guest name')
+      registrations = partial.registrations
+    }
+
+    if (!registrations.length) {
+      return buildResult({
+        success: false,
+        status: 'not_found',
+        message: `No registration found for "${parsed.parsedGuestName}"`,
+      }, false)
+    }
+
+    if (registrations.length > 1) {
+      return buildResult({
+        success: false,
+        status: 'multiple_matches',
+        message: `Found ${registrations.length} guests named "${parsed.parsedGuestName}". Select the correct ticket.`,
+        candidates: registrations.map(mapCandidate),
+      }, false)
+    }
+
+    return evaluateRegistration(registrations[0], parsed.parsedEventId)
   }
 
   const { registration, error } = await findRegistration(supabase, {
@@ -117,46 +229,7 @@ export async function lookupTicket({ qrData, ticketId }) {
 
   if (error) handleSupabaseError(error, 'Could not look up ticket')
 
-  if (!registration) {
-    return buildResult({
-      success: false,
-      status: 'not_found',
-      message: 'Ticket not found',
-    }, false)
-  }
-
-  const mapped = mapRegistration(registration)
-
-  if (parsed.parsedEventId && registration.event_id !== parsed.parsedEventId) {
-    return buildResult({
-      success: false,
-      status: 'event_mismatch',
-      message: 'Ticket does not match this event',
-      ticketEvent: mapped.eventName,
-      ...mapped,
-    }, false)
-  }
-
-  if (registration.checked_in) {
-    return buildResult({
-      success: false,
-      status: 'already_checked_in',
-      message: `Already checked in — admitted ${formatSeatCount(mapped.admittedSeats)} (reserved ${formatSeatCount(mapped.reservedSeats)}).`,
-      seats: mapped.admittedSeats,
-      reservedSeats: mapped.reservedSeats,
-      ...mapped,
-    })
-  }
-
-  return buildResult({
-    success: true,
-    status: 'ready_to_check_in',
-    message: `Reserved ${formatSeatCount(mapped.reservedSeats)}. Confirm how many guests to admit.`,
-    seats: mapped.reservedSeats,
-    reservedSeats: mapped.reservedSeats,
-    seatsToAdmit: mapped.reservedSeats,
-    ...mapped,
-  })
+  return evaluateRegistration(registration, parsed.parsedEventId)
 }
 
 export async function confirmCheckIn({ registrationId, seatsToAdmit }) {
@@ -301,6 +374,7 @@ export const CHECK_IN_STATUS = {
   ready_to_check_in: { label: 'Confirm admission', tone: 'warning' },
   checked_in: { label: 'Checked in', tone: 'success' },
   already_checked_in: { label: 'Already checked in', tone: 'warning' },
+  multiple_matches: { label: 'Select guest', tone: 'warning' },
   not_found: { label: 'Ticket not found', tone: 'error' },
   invalid: { label: 'Invalid ticket', tone: 'error' },
   event_mismatch: { label: 'Wrong event', tone: 'error' },

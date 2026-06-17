@@ -11,6 +11,7 @@ import {
   CHECK_IN_STATUS,
   confirmCheckIn,
   formatSeatCount,
+  isTicketIdLookup,
   lookupTicket,
   updateAdmittedSeats,
 } from '../../services/checkIn'
@@ -65,6 +66,7 @@ function SeatStepper({ value, onChange, min = 1, max = 20, disabled = false }) {
 export default function AdminCheckIn() {
   const [scanning, setScanning] = useState(false)
   const [manualId, setManualId] = useState('')
+  const [nameMatches, setNameMatches] = useState(null)
   const [busy, setBusy] = useState(false)
   const [result, setResult] = useState(null)
   const [pending, setPending] = useState(null)
@@ -99,8 +101,8 @@ export default function AdminCheckIn() {
     return entry
   }
 
-  const handleLookup = useCallback(async ({ qrData, ticketId }) => {
-    const key = qrData || ticketId
+  const handleLookup = useCallback(async ({ qrData, ticketId, guestName, registrationId }) => {
+    const key = qrData || ticketId || guestName || registrationId
     const now = Date.now()
     if (key && lastScanRef.current.value === key && now - lastScanRef.current.at < 2500) {
       return
@@ -109,8 +111,9 @@ export default function AdminCheckIn() {
 
     setBusy(true)
     setCorrecting(null)
+    setNameMatches(null)
     try {
-      const { ok, data } = await lookupTicket({ qrData, ticketId })
+      const { ok, data } = await lookupTicket({ qrData, ticketId, guestName, registrationId })
       if (!data?.status) {
         throw new Error(data?.message || data?.error || 'Ticket lookup failed')
       }
@@ -119,6 +122,13 @@ export default function AdminCheckIn() {
         setPending(data)
         setSeatsToAdmit(data.seatsToAdmit || data.reservedSeats || 1)
         setResult(null)
+        return
+      }
+
+      if (data.status === 'multiple_matches') {
+        setPending(null)
+        setNameMatches(data.candidates || [])
+        recordResult(data, ok)
         return
       }
 
@@ -246,10 +256,20 @@ export default function AdminCheckIn() {
 
   const onManualSubmit = async (e) => {
     e.preventDefault()
-    const ticketId = manualId.trim()
-    if (!ticketId) return
-    await handleLookup({ ticketId })
+    const value = manualId.trim()
+    if (!value) return
+
+    if (isTicketIdLookup(value)) {
+      await handleLookup({ ticketId: value.padStart(6, '0') })
+    } else {
+      await handleLookup({ guestName: value })
+    }
     setManualId('')
+  }
+
+  const onSelectMatch = async (registrationId) => {
+    setNameMatches(null)
+    await handleLookup({ registrationId })
   }
 
   const sessionStats = history.reduce(
@@ -304,13 +324,13 @@ export default function AdminCheckIn() {
 
           <form className="space-y-3 border-t border-border-light pt-4" onSubmit={onManualSubmit}>
             <div>
-              <label className={ADMIN_LABEL} htmlFor="ticket-id">Manual ticket ID</label>
+              <label className={ADMIN_LABEL} htmlFor="ticket-lookup">Ticket ID or guest name</label>
               <input
-                id="ticket-id"
+                id="ticket-lookup"
                 className={ADMIN_INPUT}
                 value={manualId}
                 onChange={(e) => setManualId(e.target.value)}
-                placeholder="e.g. 000001"
+                placeholder="e.g. 000001 or Elikplim Adzre"
               />
             </div>
             <button type="submit" className={ADMIN_BTN_OUTLINE} disabled={busy || !manualId.trim()}>
@@ -320,6 +340,29 @@ export default function AdminCheckIn() {
         </section>
 
         <section className="space-y-4">
+          {nameMatches?.length ? (
+            <div className={`rounded border p-5 ${resultTone('warning')}`}>
+              <p className="text-xs uppercase tracking-widest opacity-80">Multiple guests found</p>
+              <p className="mt-2 text-sm">Select the correct registration:</p>
+              <div className="mt-4 space-y-2">
+                {nameMatches.map((candidate) => (
+                  <button
+                    key={candidate.registrationId}
+                    type="button"
+                    className={`${ADMIN_BTN_OUTLINE} w-full justify-start text-left`}
+                    onClick={() => onSelectMatch(candidate.registrationId)}
+                    disabled={busy}
+                  >
+                    <span className="block font-medium">{candidate.attendeeName}</span>
+                    <span className="block text-xs opacity-80">
+                      Ticket #{candidate.ticketId || '—'} · {candidate.eventName} · {formatSeatCount(candidate.reservedSeats)}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : null}
+
           {pending ? (
             <div className={`rounded border p-5 ${resultTone('warning')}`}>
               <p className="text-xs uppercase tracking-widest opacity-80">Confirm admission</p>
