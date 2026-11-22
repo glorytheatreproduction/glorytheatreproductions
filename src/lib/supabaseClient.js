@@ -5,8 +5,12 @@ function envOrUndefined(value) {
   return trimmed || undefined
 }
 
-const supabaseUrl = envOrUndefined(import.meta.env.VITE_SUPABASE_URL)
-const supabaseAnonKey = envOrUndefined(import.meta.env.VITE_SUPABASE_ANON_KEY)
+// `import.meta.env` only exists under Vite. Node scripts (e.g. scripts/seed-cms.mjs) import
+// modules that depend on this file, so fall back to an empty env there.
+const viteEnv = import.meta.env ?? {}
+
+const supabaseUrl = envOrUndefined(viteEnv.VITE_SUPABASE_URL)
+const supabaseAnonKey = envOrUndefined(viteEnv.VITE_SUPABASE_ANON_KEY)
 
 export { supabaseUrl }
 

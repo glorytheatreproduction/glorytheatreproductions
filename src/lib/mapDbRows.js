@@ -1,5 +1,5 @@
-import { resolveCmsImageUrl } from './cmsImage'
-import { normalizeAlbumImages } from './galleryImages'
+import { resolveCmsImageUrl } from './cmsImage.js'
+import { normalizeAlbumImages } from './galleryImages.js'
 
 function normalizeBackgroundMusic(raw) {
   if (!raw || typeof raw !== 'object') {

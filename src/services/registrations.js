@@ -16,6 +16,8 @@ export function mapRegistrationRow(row) {
     pngUrl: row.png_url,
     pdfUrl: row.pdf_url,
     ticketStatus: row.ticket_status,
+    emailStatus: row.email_status,
+    emailSentAt: row.email_sent_at,
     checkedIn: row.checked_in,
     checkedInAt: row.checked_in_at,
     checkedInSeats: row.checked_in_seats,
@@ -70,6 +72,11 @@ export async function regenerateTicket(registrationId) {
   return invokeEdgeFunction('generate-ticket', { registration_id: registrationId })
 }
 
+// Regenerating doesn't re-email a guest who was already emailed; this explicitly sends it again.
+export async function resendTicketEmail(registrationId) {
+  return invokeEdgeFunction('generate-ticket', { registration_id: registrationId, send_email: true })
+}
+
 export async function regenerateAllTickets(eventId, onProgress) {
   const registrations = await fetchRegistrationsByEvent(eventId)
   let done = 0
@@ -92,6 +99,14 @@ export const TICKET_STATUS_LABELS = {
   pending: 'Pending',
   generated: 'Generated',
   failed: 'Failed',
+}
+
+export const EMAIL_STATUS_LABELS = {
+  pending: 'Pending',
+  sent: 'Sent',
+  failed: 'Failed',
+  skipped: 'Not sent (email not set up)',
+  no_email: 'No email',
 }
 
 function slugifyFilename(value) {

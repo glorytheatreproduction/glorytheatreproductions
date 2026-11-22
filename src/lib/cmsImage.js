@@ -1,5 +1,5 @@
 import { sanitizeImageUrl } from '../../shared/lib/cmsImage.js'
-import { getPublicStorageUrl, supabaseIsConfigured, supabaseUrl } from './supabaseClient'
+import { getPublicStorageUrl, supabaseIsConfigured, supabaseUrl } from './supabaseClient.js'
 
 /** Resolve CMS image values to a browser-loadable URL. */
 export function resolveCmsImageUrl(url) {
