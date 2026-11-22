@@ -7,6 +7,7 @@ import {
 } from '../../components/admin/adminStyles'
 import { fetchAllEvents } from '../../services/cms/events'
 import {
+  EMAIL_STATUS_LABELS,
   TICKET_STATUS_LABELS,
   downloadRegistrationsCsv,
   fetchRegistrationCountsByEvent,
@@ -14,7 +15,10 @@ import {
   fetchTicketErrors,
   regenerateAllTickets,
   regenerateTicket,
+  resendTicketEmail,
 } from '../../services/registrations'
+
+const EMAIL_PROBLEM_STATUSES = ['failed', 'skipped']
 
 export default function AdminRegistrations() {
   const [events, setEvents] = useState([])
@@ -59,7 +63,10 @@ export default function AdminRegistrations() {
       const registrations = await fetchRegistrationsByEvent(id)
       setRows(registrations)
       const errorMap = {}
-      await Promise.all(registrations.filter((r) => r.ticketStatus === 'failed').map(async (reg) => {
+      const withProblems = registrations.filter(
+        (r) => r.ticketStatus === 'failed' || EMAIL_PROBLEM_STATUSES.includes(r.emailStatus),
+      )
+      await Promise.all(withProblems.map(async (reg) => {
         errorMap[reg.id] = await fetchTicketErrors(reg.id)
       }))
       setErrorsByReg(errorMap)
@@ -79,6 +86,22 @@ export default function AdminRegistrations() {
       await regenerateTicket(registrationId)
       await loadRegistrations()
       setStatus('Ticket regeneration started.')
+    } catch (err) {
+      setStatus(err.message)
+    }
+  }
+
+  const onResendEmail = async (row) => {
+    if (row.emailStatus === 'sent' && !window.confirm(`${row.fullName} was already emailed. Send the ticket again to ${row.email}?`)) return
+    setStatus('')
+    try {
+      const result = await resendTicketEmail(row.id)
+      await loadRegistrations()
+      setStatus(
+        result?.email_status === 'sent'
+          ? `Ticket emailed to ${row.email}.`
+          : `Email to ${row.email} did not send. See the error under the ticket links.`,
+      )
     } catch (err) {
       setStatus(err.message)
     }
@@ -223,6 +246,7 @@ export default function AdminRegistrations() {
                 <th className="py-2 pr-4">Admitted</th>
                 <th className="py-2 pr-4">Ticket ID</th>
                 <th className="py-2 pr-4">Ticket</th>
+                <th className="py-2 pr-4">Email</th>
                 <th className="py-2 pr-4">Checked in</th>
                 <th className="py-2 pr-4">Files</th>
                 <th className="py-2">Actions</th>
@@ -248,6 +272,20 @@ export default function AdminRegistrations() {
                   </td>
                   <td className="py-3 pr-4 font-mono text-xs">{row.ticketId || '—'}</td>
                   <td className="py-3 pr-4">{TICKET_STATUS_LABELS[row.ticketStatus] || row.ticketStatus}</td>
+                  <td className="py-3 pr-4">
+                    {row.emailStatus ? (
+                      <span className={EMAIL_PROBLEM_STATUSES.includes(row.emailStatus) ? 'text-burgundy-light' : undefined}>
+                        {EMAIL_STATUS_LABELS[row.emailStatus] || row.emailStatus}
+                        {row.emailStatus === 'sent' && row.emailSentAt ? (
+                          <span className="block text-xs text-ink-muted">
+                            {new Date(row.emailSentAt).toLocaleString()}
+                          </span>
+                        ) : null}
+                      </span>
+                    ) : (
+                      <span className="text-ink-muted">—</span>
+                    )}
+                  </td>
                   <td className="py-3 pr-4">
                     {row.checkedIn ? (
                       <span className="text-green-800">
@@ -277,9 +315,16 @@ export default function AdminRegistrations() {
                     ) : null}
                   </td>
                   <td className="py-3">
-                    <button type="button" className={ADMIN_BTN_OUTLINE} onClick={() => onRegenerate(row.id)}>
-                      Regenerate
-                    </button>
+                    <div className="flex flex-wrap gap-2">
+                      <button type="button" className={ADMIN_BTN_OUTLINE} onClick={() => onRegenerate(row.id)}>
+                        Regenerate
+                      </button>
+                      {row.email && row.ticketStatus === 'generated' ? (
+                        <button type="button" className={ADMIN_BTN_OUTLINE} onClick={() => onResendEmail(row)}>
+                          Resend email
+                        </button>
+                      ) : null}
+                    </div>
                   </td>
                 </tr>
               ))}
