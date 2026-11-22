@@ -330,6 +330,39 @@ async function callerIsStaff(supabase, authHeader) {
   )
 }
 
+// Draws a random ticket ID and saves it on the registration before the ticket is rendered, so the
+// QR and image always carry the ID that is stored. Retries if another ticket took the same ID at
+// the same moment (unique index → 23505). If a parallel run already assigned one, uses that.
+async function reserveTicketId(supabase, registration) {
+  for (let attempt = 1; attempt <= 5; attempt++) {
+    const { data: candidate, error: idError } = await supabase.rpc('next_ticket_id', {
+      p_event_id: registration.event_id,
+    })
+    if (idError) throw idError
+
+    const { data: saved, error: saveError } = await supabase
+      .from('registrations')
+      .update({ ticket_id: candidate, updated_at: new Date().toISOString() })
+      .eq('id', registration.id)
+      .is('ticket_id', null)
+      .select('ticket_id')
+      .maybeSingle()
+
+    if (saveError?.code === '23505') continue
+    if (saveError) throw saveError
+    if (saved?.ticket_id) return saved.ticket_id
+
+    const { data: current, error: readError } = await supabase
+      .from('registrations')
+      .select('ticket_id')
+      .eq('id', registration.id)
+      .single()
+    if (readError) throw readError
+    if (current?.ticket_id) return current.ticket_id
+  }
+  throw new Error('Could not assign a unique ticket ID')
+}
+
 async function processRegistration(supabase, registrationId) {
   const renderKey = getEnv('HTML_RENDER_API_KEY')
   const resendKey = getEnv('RESEND_API_KEY')
@@ -360,11 +393,7 @@ async function processRegistration(supabase, registrationId) {
 
   try {
     if (!ticketId) {
-      const { data: nextId, error: idError } = await supabase.rpc('next_ticket_id', {
-        p_event_id: registration.event_id,
-      })
-      if (idError) throw idError
-      ticketId = nextId
+      ticketId = await reserveTicketId(supabase, registration)
     }
 
     qrPayload = JSON.stringify({
@@ -403,7 +432,7 @@ async function processRegistration(supabase, registrationId) {
     const { data: pngPublic } = supabase.storage.from('tickets').getPublicUrl(pngPath)
     pngUrl = pngPublic.publicUrl
 
-    await supabase
+    const { error: saveError } = await supabase
       .from('registrations')
       .update({
         ticket_id: ticketId,
@@ -414,21 +443,21 @@ async function processRegistration(supabase, registrationId) {
         updated_at: new Date().toISOString(),
       })
       .eq('id', registration.id)
+    if (saveError) throw new Error(`Could not save ticket: ${saveError.message}`)
   } catch (err) {
     ticketFailed = true
     await supabase.from('ticket_generation_errors').insert({
       registration_id: registration.id,
       error_message: err.message || 'Ticket generation failed',
     })
-    await supabase
+    const { error: failError } = await supabase
       .from('registrations')
       .update({
-        ticket_id: ticketId || registration.ticket_id,
-        qr_payload: qrPayload || registration.qr_payload,
         ticket_status: 'failed',
         updated_at: new Date().toISOString(),
       })
       .eq('id', registration.id)
+    if (failError) console.error('Could not mark ticket as failed', registration.id, failError.message)
   }
 
   if (!ticketFailed && pngBytes) {
