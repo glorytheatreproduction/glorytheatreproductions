@@ -1,4 +1,4 @@
-import { resolveCmsImageUrl } from './cmsImage'
+import { resolveCmsImageUrl } from './cmsImage.js'
 
 function parseImagesField(raw) {
   if (!raw) return []
